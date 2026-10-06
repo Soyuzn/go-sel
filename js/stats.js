@@ -19,7 +19,7 @@
     var times = [], deadline = performance.now() + 60;
     for (var k = 0; k < 21; k++) {
       var n = 0, start = performance.now(), elapsed;
-      do { once(); n++; elapsed = performance.now() - start; } while (elapsed < 2);
+      do { once(); n++; elapsed = performance.now() - start; } while (elapsed < 2 && n < 2000);
       times.push(elapsed / n);
       if (k >= 4 && performance.now() > deadline) break;
     }

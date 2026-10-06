@@ -25,11 +25,17 @@
 
       this.animator = new ns.Animator(this.renderer, {
         onProgress: function (anim) { self.ui.progress(anim, self); },
+        onExpand: function (idx) { self.soundThink(idx); },
         onPhase: function (phase) {
+          if (phase === 'path') { ns.audio.music.stop(); ns.audio.sfx.found(); }
           if (phase === 'path') { self.ui.setTracker('route'); self.ui.setStatus('Rute ketemu! Menggambar jalur…', 'run'); }
           if (phase === 'deliver') { self.ui.setTracker('deliver'); self.ui.setResultChip('Mengantar', 'run'); self.ui.setStatus('Kurir sedang mengantar paket…', 'run'); }
         },
-        onDone: function () { self.onRunDone(); }
+        onDone: function (found) {
+          ns.audio.music.stop();
+          if (found) ns.audio.sfx.delivered(); else ns.audio.sfx.fail();
+          self.onRunDone();
+        }
       });
       this.animator.setSpeed(this.settings.speed);
 
@@ -55,7 +61,7 @@
         history: document.getElementById('history')
       }, {
         toast: function (m, t) { self.ui.toast(m, t); },
-        confetti: function () { self.ui.confetti(); }
+        confetti: function () { self.ui.confetti(); ns.audio.sfx.reward(); }
       });
 
       this.ui.bind(this);
@@ -95,7 +101,7 @@
      *   skenario : id skenario      algo  : algoritma yang dipilih
      *   langkah  : jalankan N langkah lalu jeda      selesai : langsung ke hasil
      *   banding  : isi tabel perbandingan          lihat : id bagian yang langsung ditampilkan
-     *   tema     : terang | gelap */
+     *   tema     : terang | gelap               struk : tampilkan struk order */
     openFromLink: function () {
       var q = new URLSearchParams(location.search);
       if (q.get('tema') === 'gelap' || q.get('tema') === 'terang') {
@@ -105,6 +111,7 @@
       var sc = ns.Scenarios.filter(function (s) { return s.id === q.get('skenario'); })[0];
       if (!sc) return;
       this.loadScenario(sc);
+      this.silentRun = !q.has('struk');     // ?struk = tampilkan struk order setelah selesai
       if (ns.algorithms[q.get('algo')]) this.setAlgo(q.get('algo'));
       if (q.has('langkah')) {
         for (var i = 0; i < (+q.get('langkah') || 1); i++) this.step();
@@ -112,6 +119,7 @@
         this.finish();
       }
       if (q.has('banding')) this.compareAll();
+      this.silentRun = false;
       var target = document.getElementById(q.get('lihat') || '');
       if (target) {
         ns.motion.revealAll();
@@ -139,6 +147,7 @@
       if (this.grid.pieceAt(r, c)) return;
       if (this.grid.set(r, c, value)) {
         this.renderer.drawCell(this.grid.idx(r, c));
+        ns.audio.sfx.tick();
         this.fromMaze = false;
       }
     },
@@ -168,6 +177,7 @@
         this.ui.toast('Gedung di sel itu dibongkar untuk ' + (kind === 'start' ? 'kurir.' : 'alamat tujuan.'), 'info');
       }
       this.grid[kind] = { r: r, c: c };
+      ns.audio.sfx.pop();
       this.mapChanged();
       this.ui.syncPieces(this.grid);
       this.refreshState();
@@ -321,6 +331,7 @@
 
     /* ---------- Menjalankan algoritma ---------- */
     clearVis: function () {
+      ns.audio.music.stop();
       this.animator.reset();
       this.renderer.resetVis();
       this.run_algo = null;
@@ -346,7 +357,15 @@
       this.animator.load(res);
       this.ui.startRun(id, timing.median);
       this.machine.go(autoplay ? S.RUNNING : S.PAUSED);
-      if (autoplay) this.animator.play();
+      if (autoplay) { this.animator.play(); ns.audio.music.start(); }
+    },
+
+    // Nada "berpikir": makin dekat sel yang diproses ke tujuan, makin tinggi nadanya.
+    soundThink: function (idx) {
+      var g = this.grid, goal = g.goalIndex();
+      var far = ns.algo.heuristic(g.startIndex(), goal, g.cols, false) || 1;
+      var h = ns.algo.heuristic(idx, goal, g.cols, false);
+      ns.audio.sfx.think(1 - h / far);
     },
 
     // Kunci prioritas untuk menampilkan isi priority queue secara berurutan.
@@ -368,11 +387,13 @@
     togglePause: function () {
       if (this.machine.is(S.RUNNING)) {
         this.animator.pause();
+        ns.audio.music.stop();
         this.machine.go(S.PAUSED);
         this.ui.setStatus('Dijeda. Tekan Langkah untuk maju satu node, atau Lanjut.', 'info');
       } else if (this.machine.is(S.PAUSED)) {
         this.machine.go(S.RUNNING);
         this.animator.play();
+        ns.audio.music.start();
         this.ui.setStatus('Kurir ' + ns.algorithms[this.run_algo].name + ' melanjutkan pencarian…', 'run');
       }
     },
@@ -422,10 +443,21 @@
         algo: cur.id, all: all, version: cur.version, diagonal: this.settings.diagonal,
         hasJam: this.grid.count(2) > 0, fromMaze: this.fromMaze, size: this.grid.rows * this.grid.cols
       };
-      this.ui.setInsight(this.ui.el.insight, ns.Stats.insightFor(cur.id, all, ctx));
-      var stars = this.game.onRun(ctx);
-      if (m.found) this.ui.showRating(stars, this.game.rateNote(cur.id, all, stars));
+      var insight = ns.Stats.insightFor(cur.id, all, ctx);
+      this.ui.setInsight(this.ui.el.insight, insight);
+      var result = this.game.onRun(ctx);
+      var note = m.found ? this.game.rateNote(cur.id, all, result.stars) : '';
+      if (m.found) this.ui.showRating(result.stars, note);
       this.machine.go(S.DONE);
+
+      // Struk order muncul sebentar setelah kurir sampai (tidak saat dibuka lewat link).
+      if (!this.silentRun) {
+        var self = this;
+        setTimeout(function () {
+          self.ui.showReceipt({ m: m, refCost: all.dijkstra.cost, game: result, note: note, insight: insight,
+            orderNo: self.game.history.length + (m.found ? 0 : 1) });
+        }, m.found ? 450 : 250);
+      }
     },
 
     compareAll: function () {

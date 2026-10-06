@@ -7,6 +7,10 @@
   var $$ = function (sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); };
   var fmtNum = function (n, d) { return ns.Stats.fmtNum(n, d); };
 
+  // Ongkir main-main: Rp4.000 + Rp1.000 per satuan biaya, dibulatkan ke Rp500.
+  function fareOf(cost) { return Math.round((4000 + cost * 1000) / 500) * 500; }
+  function rupiah(n) { return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
+
   var STATE_TEXT = {
     idle: 'Siapkan bidak',
     ready: 'Siap jalan',
@@ -120,6 +124,47 @@
     $('#btn-help').addEventListener('click', function () { $('#dlg-help').showModal(); });
     $('#btn-about').addEventListener('click', function () { $('#dlg-about').showModal(); });
     $('#btn-theme').addEventListener('click', function () { app.toggleTheme(); });
+
+    // Suara: tombol bisu di app bar + saklar musik di playbar.
+    var soundBtn = $('#btn-sound'), musicBox = $('#music-toggle');
+    function syncSound() {
+      var on = ns.audio.settings.sound;
+      soundBtn.setAttribute('aria-pressed', String(on));
+      soundBtn.setAttribute('aria-label', on ? 'Suara aktif, klik untuk membisukan' : 'Suara mati, klik untuk menyalakan');
+      soundBtn.querySelector('use').setAttribute('href', on ? '#i-volume' : '#i-mute');
+      musicBox.checked = ns.audio.settings.music;
+      musicBox.disabled = !on;
+    }
+    soundBtn.addEventListener('click', function () {
+      ns.audio.setSound(!ns.audio.settings.sound);
+      syncSound();
+
+    // Tombol di struk order
+    var receipt = $('#dlg-receipt');
+    $('#rc-compare').addEventListener('click', function () {
+      receipt.close();
+      app.compareAll();
+      $('#perbandingan').scrollIntoView({ block: 'start' });
+    });
+    $('#rc-other').addEventListener('click', function () {
+      receipt.close();
+      var order = ns.ALGO_ORDER, untried = order.filter(function (id) { return app.game.tried.indexOf(id) === -1; });
+      var next = untried[0] || order[(order.indexOf(app.settings.algo) + 1) % order.length];
+      app.setAlgo(next);
+      $('#lab').scrollIntoView({ block: 'start' });
+      self.toast('Sekarang pakai ' + ns.algorithms[next].name + '. Tekan Jalankan!', 'ok');
+    });
+      if (ns.audio.settings.sound) {
+        ns.audio.sfx.click();
+        if (app.machine.is(ns.STATES.RUNNING)) ns.audio.music.start();
+      }
+      self.toast(ns.audio.settings.sound ? 'Suara dinyalakan.' : 'Suara dibisukan.', 'info');
+    });
+    musicBox.addEventListener('change', function () {
+      ns.audio.setMusic(musicBox.checked);
+      if (musicBox.checked && app.machine.is(ns.STATES.RUNNING)) ns.audio.music.start();
+    });
+    syncSound();
 
     // Klik di luar kotak dialog menutup dialog.
     $$('dialog').forEach(function (d) {
@@ -403,9 +448,7 @@
     }
     [el.visited, el.length, el.cost].forEach(this.flash);
     if (m.found) {
-      // Ongkir main-main: Rp4.000 + Rp1.000 per satuan biaya, dibulatkan ke Rp500.
-      var fare = Math.round((4000 + m.cost * 1000) / 500) * 500;
-      el.fare.value = 'Rp' + fare.toLocaleString('id-ID');
+      el.fare.value = rupiah(fareOf(m.cost));
       this.setTracker('done');
       this.setResultChip('Terkirim', 'ok');
       this.setStatus('Jalur ditemukan! Panjang ' + m.length + ' sel, total biaya ' + ns.Stats.fmtCost(m.cost) + '.', 'ok');
@@ -445,6 +488,75 @@
     o.classList.add('flash');
   };
 
+  /* ---------- Struk order (popup setelah pengantaran) ----------
+   * d = { m: metrics, refCost, game: {stars, ratingPoints, missions, earned}, note, insight, orderNo } */
+  P.showReceipt = function (d) {
+    var m = d.m, $r = function (id) { return document.getElementById(id); };
+    var dlg = $r('dlg-receipt'), algo = ns.algorithms[m.id];
+    var now = new Date(), pad = function (n) { return String(n).padStart(2, '0'); };
+    var ymd = String(now.getFullYear()).slice(2) + pad(now.getMonth() + 1) + pad(now.getDate());
+    var order = 'GS-' + ymd + '-' + String(d.orderNo).padStart(4, '0');
+
+    dlg.classList.toggle('is-fail', !m.found);
+    $r('rc-order').textContent = order;
+    $r('rc-date').textContent = pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear() +
+      ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    $r('receipt-title').textContent = m.found ? 'PAKET TERKIRIM' : 'ORDER GAGAL';
+    $r('receipt-sub').textContent = 'Kurir ' + algo.name;
+    $r('receipt-note').textContent = m.found ? d.note.split('. ')[0] : 'tujuan terkurung gedung';
+    var st = d.game.stars;
+    $r('receipt-stars').textContent = m.found ? '★'.repeat(st) + '☆'.repeat(5 - st) : '';
+    $r('receipt-stars').setAttribute('aria-label', st + ' dari 5 bintang');
+
+    $r('rc-time').value = fmtNum(m.time, 3) + ' ms';
+    $r('rc-visited').value = fmtNum(m.visited) + ' sel';
+    $r('rc-length').value = m.found ? fmtNum(m.length) + ' langkah' : '-';
+    $r('rc-cost').value = m.found ? ns.Stats.fmtCost(m.cost) : '-';
+    $r('rc-optimal').textContent = !m.found ? '' : m.optimal ? '(optimal ✓)' :
+      '(+' + Math.round((m.cost / d.refCost - 1) * 100) + '% dari optimal)';
+
+    $r('rc-fare-block').hidden = !m.found;
+    if (m.found) {
+      $r('rc-fare-cost').textContent = ns.Stats.fmtCost(m.cost);
+      $r('rc-fare-dist').value = rupiah(fareOf(m.cost) - 4000);
+      $r('rc-fare').value = rupiah(fareOf(m.cost));
+    }
+
+    // Rincian poin diringkas jadi satu baris supaya struk tetap pendek.
+    var parts = [];
+    if (d.game.ratingPoints) parts.push('rating +' + d.game.ratingPoints);
+    d.game.missions.forEach(function (ms) { parts.push(ms.title + ' +' + ms.reward); });
+    $r('rc-earned').value = '+' + d.game.earned;
+    $r('rc-earn').textContent = parts.length ? parts.join(' · ') : 'Peta & algoritma ini sudah pernah dapat poin.';
+
+    $r('rc-insight').textContent = d.insight;
+    $r('rc-code').textContent = order.replace(/-/g, '');
+    $r('rc-stamp').textContent = m.found ? 'TERKIRIM' : 'GAGAL';
+    drawBarcode($r('rc-barcode'), order);
+
+    if (!dlg.open) dlg.showModal();
+    // Restart animasi cetak struk
+    var paper = $r('struk');
+    paper.classList.remove('is-printing');
+    void paper.offsetWidth;
+    paper.classList.add('is-printing');
+    ns.audio.sfx.print();
+    if (m.found) this.confetti(dlg);
+  };
+
+  // Barcode dekoratif: lebar garis diturunkan dari kode order (deterministik).
+  function drawBarcode(el, code) {
+    var stops = [], x = 0, black = true;
+    for (var i = 0; i < code.length * 3; i++) {
+      var w = 1 + ((code.charCodeAt(i % code.length) + i * 7) % 3);
+      stops.push((black ? '#1a1a1a ' : 'transparent ') + x + 'px ' + (x + w) + 'px');
+      x += w;
+      black = !black;
+    }
+    el.style.width = x + 'px';
+    el.style.background = 'linear-gradient(90deg, ' + stops.join(', ') + ')';
+  }
+
   /* ---------- Toast & confetti ---------- */
   P.toast = function (text, tone) {
     var t = document.createElement('div');
@@ -460,7 +572,8 @@
     }, 2600);
   };
 
-  P.confetti = function () {
+  // host: elemen tempat confetti ditempel (dialog modal ada di top layer, di atas body).
+  P.confetti = function (host) {
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var colors = ['#00AA13', '#FFB400', '#6CC24A', '#F52713', '#0E7FD8', '#ffffff'];
     for (var i = 0; i < 60; i++) {
@@ -472,7 +585,7 @@
       c.style.setProperty('--rot', (Math.random() * 900 - 450) + 'deg');
       c.style.setProperty('--dur', (1.4 + Math.random() * 1.2) + 's');
       c.style.animationDelay = (Math.random() * 0.3) + 's';
-      document.body.appendChild(c);
+      (host || document.body).appendChild(c);
       setTimeout((function (n) { return function () { n.remove(); }; })(c), 3000);
     }
   };

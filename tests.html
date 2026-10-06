@@ -35,6 +35,7 @@
   <script src="js/algorithms/greedy.js"></script>
   <script src="js/grid.js"></script>
   <script src="js/maze.js"></script>
+  <script src="js/scenarios.js"></script>
   <script>
   (function () {
     'use strict';
@@ -220,6 +221,30 @@
     check('Resize: bidak dipindah ke dalam batas', rg.inBounds(rg.start.r, rg.start.c) && rg.get(3, 3) === 1);
     var back = NS.Grid.fromJSON(JSON.parse(JSON.stringify(rg.toJSON())));
     check('JSON: simpan lalu muat menghasilkan peta sama', back.cells.join('') === rg.cells.join('') && back.start.r === rg.start.r);
+
+    // 13. Klaim tiap skenario di kartu "Skenario siap coba" harus tetap benar
+    function scen(id) {
+      var sc = NS.Scenarios.filter(function (x) { return x.id === id; })[0], b = sc.build(), out = {};
+      ORDER.forEach(function (a) { out[a] = run(a, b.grid, b.diagonal); });
+      return out;
+    }
+    var so = scen('open');
+    check('Skenario Kota lengang: A* mengunjungi jauh lebih sedikit sel dari Dijkstra', so.astar.visitedCount * 4 < so.dijkstra.visitedCount);
+    var sj = scen('jam');
+    check('Skenario Jalan macet: BFS lebih mahal dari Dijkstra', sj.bfs.cost > sj.dijkstra.cost + 1e-9, sj.bfs.cost + ' vs ' + sj.dijkstra.cost);
+    var st = scen('trap');
+    check('Skenario Kantong buntu: Greedy tidak optimal, A* optimal',
+      st.greedy.cost > st.dijkstra.cost + 1e-9 && A.sameCost(st.astar.cost, st.dijkstra.cost),
+      st.greedy.cost.toFixed(2) + ' vs ' + st.dijkstra.cost.toFixed(2));
+    var sm = scen('maze');
+    check('Skenario Labirin: jalur DFS minimal 3x jalur optimal', sm.dfs.cost >= 3 * sm.dijkstra.cost, sm.dfs.cost + ' vs ' + sm.dijkstra.cost);
+    var sd = scen('diag');
+    check('Skenario Pojok bersilangan: semua jalur valid tanpa potong sudut', ORDER.every(function (a) {
+      var b = NS.Scenarios.filter(function (x) { return x.id === 'diag'; })[0].build();
+      return sd[a].found && validPath(b.grid, sd[a], true);
+    }));
+    var sb = scen('boxed');
+    check('Skenario Alamat terkurung: tidak ada jalur', ORDER.every(function (a) { return !sb[a].found; }));
 
     var sum = document.getElementById('summary');
     sum.textContent = pass + ' lulus, ' + fail + ' gagal';

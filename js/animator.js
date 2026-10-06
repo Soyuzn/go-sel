@@ -170,6 +170,9 @@
       this.deliverT = Math.min(1, this.deliverT + dt / ddur);
       var e = this.deliverT < 0.5 ? 2 * this.deliverT * this.deliverT : 1 - Math.pow(-2 * this.deliverT + 2, 2) / 2;
       this.r.ov.courier = this._courierAt(e);
+      // Turunan easing (0..2) dinormalkan jadi 0..1 untuk suara mesin.
+      var velocity = this.deliverT < 0.5 ? 4 * this.deliverT : 4 * (1 - this.deliverT);
+      if (this.hooks.onDrive) this.hooks.onDrive(velocity / 2);
       if (this.deliverT >= 1) this._finishDeliver();
     }
 

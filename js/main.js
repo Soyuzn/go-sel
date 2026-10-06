@@ -26,14 +26,17 @@
       this.animator = new ns.Animator(this.renderer, {
         onProgress: function (anim) { self.ui.progress(anim, self); },
         onExpand: function (idx) { self.soundThink(idx); },
+        onDrive: function (v) { ns.audio.engine.setSpeed(v); },
         onPhase: function (phase) {
           if (phase === 'path') { ns.audio.music.stop(); ns.audio.sfx.found(); }
           if (phase === 'path') { self.ui.setTracker('route'); self.ui.setStatus('Rute ketemu! Menggambar jalur…', 'run'); }
+          if (phase === 'deliver') ns.audio.engine.start();
           if (phase === 'deliver') { self.ui.setTracker('deliver'); self.ui.setResultChip('Mengantar', 'run'); self.ui.setStatus('Kurir sedang mengantar paket…', 'run'); }
         },
         onDone: function (found) {
           ns.audio.music.stop();
-          if (found) ns.audio.sfx.delivered(); else ns.audio.sfx.fail();
+          ns.audio.engine.stop();
+          if (found) { ns.audio.sfx.honk(); setTimeout(ns.audio.sfx.delivered, 300); } else ns.audio.sfx.fail();
           self.onRunDone();
         }
       });
@@ -332,6 +335,7 @@
     /* ---------- Menjalankan algoritma ---------- */
     clearVis: function () {
       ns.audio.music.stop();
+      ns.audio.engine.stop();
       this.animator.reset();
       this.renderer.resetVis();
       this.run_algo = null;
@@ -388,12 +392,13 @@
       if (this.machine.is(S.RUNNING)) {
         this.animator.pause();
         ns.audio.music.stop();
+        ns.audio.engine.stop();
         this.machine.go(S.PAUSED);
         this.ui.setStatus('Dijeda. Tekan Langkah untuk maju satu node, atau Lanjut.', 'info');
       } else if (this.machine.is(S.PAUSED)) {
         this.machine.go(S.RUNNING);
         this.animator.play();
-        ns.audio.music.start();
+        if (this.animator.phase === 'deliver') ns.audio.engine.start(); else ns.audio.music.start();
         this.ui.setStatus('Kurir ' + ns.algorithms[this.run_algo].name + ' melanjutkan pencarian…', 'run');
       }
     },

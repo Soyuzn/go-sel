@@ -28,7 +28,7 @@
 }
 .brand__logo { width: 40px; height: 40px; flex: none; filter: drop-shadow(0 4px 8px rgba(0, 170, 19, 0.3)); }
 .brand__text { display: flex; flex-direction: column; min-width: 0; }
-.brand__name { font-weight: 800; font-size: var(--fs-lg); letter-spacing: -0.03em; color: var(--accent-text); line-height: 1.1; }
+.brand__name { white-space: nowrap; font-weight: 800; font-size: var(--fs-lg); letter-spacing: -0.03em; color: var(--accent-text); line-height: 1.1; }
 .brand__tag { font-size: var(--fs-xs); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .topnav { display: none; gap: 4px; margin-left: auto; }

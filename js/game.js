@@ -180,6 +180,7 @@
   P.renderWallet = function (bump) {
     var e = this.els, lv = this.level();
     e.points.textContent = this.points.toLocaleString('id-ID');
+    if (e.pointsMini) e.pointsMini.textContent = e.points.textContent;
     if (bump) {
       e.points.classList.remove('bump');
       void e.points.offsetWidth;

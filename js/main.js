@@ -43,6 +43,7 @@
 
       this.game = new ns.Game({
         points: document.getElementById('points'),
+        pointsMini: document.getElementById('points-mini'),
         levelName: document.getElementById('level-name'),
         levelProgress: document.getElementById('level-progress'),
         levelNext: document.getElementById('level-next'),
@@ -84,8 +85,33 @@
 
       this.bindShortcuts();
       this.watchTheme();
+      document.getElementById('kontrol').scrollTop = 0;
+      this.openFromLink();
+    },
 
-      if (!ns.store.get('seen-help', false)) {
+    /* Link skenario, misalnya index.html?skenario=trap&algo=astar&selesai
+     *   skenario : id skenario      algo  : algoritma yang dipilih
+     *   langkah  : jalankan N langkah lalu jeda      selesai : langsung ke hasil
+     *   banding  : isi tabel perbandingan */
+    openFromLink: function () {
+      var q = new URLSearchParams(location.search);
+      if (q.get('tema') === 'gelap' || q.get('tema') === 'terang') {
+        document.documentElement.dataset.theme = q.get('tema') === 'gelap' ? 'dark' : 'light';
+        this.onThemeChange();
+      }
+      var sc = ns.Scenarios.filter(function (s) { return s.id === q.get('skenario'); })[0];
+      if (!sc) return;
+      this.loadScenario(sc);
+      if (ns.algorithms[q.get('algo')]) this.setAlgo(q.get('algo'));
+      if (q.has('langkah')) {
+        for (var i = 0; i < (+q.get('langkah') || 1); i++) this.step();
+      } else if (q.has('selesai')) {
+        this.finish();
+      }
+      if (q.has('banding')) this.compareAll();
+
+      var fromLink = /skenario=/.test(location.search);
+      if (!fromLink && !ns.store.get('seen-help', false)) {
         ns.store.set('seen-help', true);
         setTimeout(function () { document.getElementById('dlg-help').showModal(); }, 400);
       }
@@ -511,6 +537,7 @@
       this.renderer.readTheme();
       this.renderer.fullRedraw();
       this.stats.drawChart(true);
+      this.ui.drawThumbs();
     },
 
     watchTheme: function () {

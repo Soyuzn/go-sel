@@ -16,19 +16,13 @@ body {
   line-height: 1.55;
   color: var(--text);
   background-color: var(--bg);
-  /* Latar bermotif grid halus, mengingatkan pada sel peta */
-  background-image:
-    linear-gradient(var(--bg-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
-  background-size: 28px 28px;
-  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-h1, h2, h3, h4 { margin: 0; line-height: 1.2; letter-spacing: -0.015em; font-weight: 800; }
+h1, h2, h3, h4 { margin: 0; line-height: 1.2; letter-spacing: -0.025em; font-weight: 800; }
 h2 { font-size: var(--fs-lg); }
 h3 { font-size: var(--fs-md); font-weight: 700; }
 p { margin: 0 0 var(--sp-3); }
@@ -60,6 +54,9 @@ a:hover { color: var(--accent-hover); }
 }
 
 ::selection { background: var(--gs-green-200); color: var(--gs-ink-900); }
+
+/* Atribut hidden harus menang atas display komponen (kecuali empty state yang memudar). */
+[hidden]:not(.map__empty) { display: none !important; }
 
 .sr-only {
   position: absolute !important;

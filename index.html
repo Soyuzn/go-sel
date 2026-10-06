@@ -137,6 +137,10 @@
         <a href="#misi">Misi</a>
       </nav>
       <div class="appbar__actions">
+        <a class="points-pill" href="#dompet" title="SelPoin dan level kurir">
+          <svg class="ico" aria-hidden="true"><use href="#i-coin"/></svg>
+          <output id="points-mini" class="mono">0</output><span class="sr-only">SelPoin</span>
+        </a>
         <button class="btn btn--ghost btn--sm" id="btn-help" type="button">
           <svg class="ico" aria-hidden="true"><use href="#i-help"/></svg><span class="hide-sm">Cara pakai</span>
         </button>
@@ -152,37 +156,6 @@
   </header>
 
   <main id="top" class="page">
-    <!-- ============ Beranda: dompet poin + skenario ============ -->
-    <section class="home" aria-label="Beranda">
-      <article class="wallet" aria-labelledby="wallet-title">
-        <div class="wallet__top">
-          <div class="wallet__balance">
-            <p class="wallet__label" id="wallet-title"><svg class="ico" aria-hidden="true"><use href="#i-coin"/></svg> SelPoin kamu</p>
-            <p class="wallet__points"><output id="points" aria-live="polite">0</output><span>poin</span></p>
-          </div>
-          <div class="wallet__level">
-            <span class="wallet__badge" id="level-name">Kurir Baru</span>
-            <progress id="level-progress" max="100" value="0" aria-label="Kemajuan ke level berikutnya">0%</progress>
-            <small id="level-next">200 poin lagi ke Kurir Pemula</small>
-          </div>
-        </div>
-        <nav class="wallet__actions" aria-label="Aksi cepat">
-          <a class="wallet__action" href="#misi"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-target"/></svg></span>Misi</a>
-          <button class="wallet__action" type="button" id="btn-quiz"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg></span>Kuis</button>
-          <a class="wallet__action" href="#lencana"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-medal"/></svg></span>Lencana</a>
-          <a class="wallet__action" href="#riwayat"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-history"/></svg></span>Riwayat</a>
-        </nav>
-      </article>
-
-      <div class="promo">
-        <div class="promo__head">
-          <h2 class="promo__title">Skenario siap coba</h2>
-          <p class="promo__sub">Geser untuk melihat. Tiap skenario memperlihatkan sifat satu algoritma.</p>
-        </div>
-        <ul class="promo__track" id="scenario-list" aria-label="Daftar skenario peta"></ul>
-      </div>
-    </section>
-
     <div class="lab-layout">
       <!-- ============ Lab: canvas peta ============ -->
       <section id="lab" class="card lab" aria-labelledby="lab-title">
@@ -417,7 +390,6 @@
       <section id="hasil" class="card results" aria-labelledby="hasil-title">
         <div class="results__head">
           <h2 id="hasil-title" class="section-title"><svg class="ico" aria-hidden="true"><use href="#i-receipt"/></svg>Status pengantaran</h2>
-          <span class="chip" id="result-chip" data-tone="idle">Belum jalan</span>
         </div>
 
         <div class="driver">
@@ -464,6 +436,37 @@
         <p class="insight" id="insight" aria-live="polite" hidden></p>
       </section>
     </div>
+
+    <!-- ============ Dompet poin + skenario ============ -->
+    <section class="home" id="dompet" aria-label="Dompet poin dan skenario">
+      <article class="wallet" aria-labelledby="wallet-title">
+        <div class="wallet__top">
+          <div class="wallet__balance">
+            <p class="wallet__label" id="wallet-title"><svg class="ico" aria-hidden="true"><use href="#i-coin"/></svg> SelPoin kamu</p>
+            <p class="wallet__points"><output id="points" aria-live="polite">0</output><span>poin</span></p>
+          </div>
+          <div class="wallet__level">
+            <span class="wallet__badge" id="level-name">Kurir Baru</span>
+            <progress id="level-progress" max="100" value="0" aria-label="Kemajuan ke level berikutnya">0%</progress>
+            <small id="level-next">200 poin lagi ke Kurir Pemula</small>
+          </div>
+        </div>
+        <nav class="wallet__actions" aria-label="Aksi cepat">
+          <a class="wallet__action" href="#misi"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-target"/></svg></span>Misi</a>
+          <button class="wallet__action" type="button" id="btn-quiz"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg></span>Kuis</button>
+          <a class="wallet__action" href="#lencana"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-medal"/></svg></span>Lencana</a>
+          <a class="wallet__action" href="#riwayat"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-history"/></svg></span>Riwayat</a>
+        </nav>
+      </article>
+
+      <div class="promo">
+        <div class="promo__head">
+          <h2 class="promo__title">Skenario siap coba</h2>
+          <p class="promo__sub">Geser untuk melihat. Tiap skenario memperlihatkan sifat satu algoritma.</p>
+        </div>
+        <ul class="promo__track" id="scenario-list" aria-label="Daftar skenario peta"></ul>
+      </div>
+    </section>
 
     <!-- ============ Perbandingan ============ -->
     <section id="perbandingan" class="card compare" aria-labelledby="cmp-title">
@@ -772,6 +775,7 @@
 
   <template id="tpl-scenario">
     <li class="promo-card">
+      <canvas class="promo-card__thumb" width="240" height="120" aria-hidden="true"></canvas>
       <span class="promo-card__tag"></span>
       <h3 class="promo-card__title"></h3>
       <p class="promo-card__desc"></p>

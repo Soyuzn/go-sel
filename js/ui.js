@@ -139,10 +139,42 @@
       li.querySelector('.promo-card__tag').textContent = sc.tag;
       li.querySelector('.promo-card__title').textContent = sc.title;
       li.querySelector('.promo-card__desc').textContent = sc.desc;
+      li.querySelector('canvas').dataset.scenario = sc.id;
       var btn = li.querySelector('button');
       btn.setAttribute('aria-label', 'Coba skenario ' + sc.title);
       btn.addEventListener('click', function () { app.loadScenario(sc); });
       list.appendChild(node);
+    });
+    this.drawThumbs();
+  };
+
+  // Thumbnail tiap skenario digambar dari peta aslinya + jalur optimal (Dijkstra).
+  P.drawThumbs = function () {
+    var cs = getComputedStyle(document.documentElement);
+    var col = function (n) { return cs.getPropertyValue(n).trim(); };
+    $$('.promo-card__thumb').forEach(function (cv) {
+      var sc = ns.Scenarios.filter(function (x) { return x.id === cv.dataset.scenario; })[0];
+      var b = sc.build(), g = b.grid, ctx = cv.getContext('2d');
+      var s = Math.min(cv.width / g.cols, cv.height / g.rows);
+      var ox = (cv.width - s * g.cols) / 2, oy = (cv.height - s * g.rows) / 2;
+      ctx.fillStyle = col('--surface-2');
+      ctx.fillRect(0, 0, cv.width, cv.height);
+      var res = ns.algorithms.dijkstra.solve(g.cells, g.rows, g.cols, g.startIndex(), g.goalIndex(), { diagonal: b.diagonal });
+      var onPath = {};
+      if (res.path) res.path.forEach(function (i) { onPath[i] = true; });
+      for (var i = 0; i < g.cells.length; i++) {
+        var r = (i / g.cols) | 0, c = i - r * g.cols, v = g.cells[i];
+        if (v === 0 && !onPath[i]) continue;
+        ctx.fillStyle = onPath[i] ? col('--gs-green-600') : v === 1 ? col('--cell-wall') : col('--cell-jam');
+        ctx.fillRect(ox + c * s, oy + r * s, Math.ceil(s), Math.ceil(s));
+      }
+      [['start', col('--gs-green-800')], ['goal', col('--gs-amber-500')]].forEach(function (p) {
+        var pc = g[p[0]];
+        ctx.fillStyle = p[1];
+        ctx.beginPath();
+        ctx.arc(ox + (pc.c + 0.5) * s, oy + (pc.r + 0.5) * s, Math.max(3, s * 0.9), 0, Math.PI * 2);
+        ctx.fill();
+      });
     });
   };
 
@@ -173,9 +205,8 @@
 
     el.run.disabled = !ready || st === S.RUNNING || app.busy;
     el.run.querySelector('span').textContent = st === S.DONE ? 'Jalankan lagi' : (st === S.PAUSED ? 'Lanjut' : 'Jalankan');
-    el.pause.disabled = !(st === S.RUNNING || st === S.PAUSED);
-    el.pause.querySelector('span').textContent = st === S.PAUSED ? 'Lanjut' : 'Jeda';
-    el.pause.querySelector('use').setAttribute('href', st === S.PAUSED ? '#i-play' : '#i-pause');
+    // Saat dijeda, tombol utama berubah jadi "Lanjut", jadi tombol Jeda cukup aktif saat berjalan.
+    el.pause.disabled = st !== S.RUNNING;
     el.step.disabled = !ready || st === S.DONE || app.busy;
     el.finish.disabled = !ready || st === S.DONE || app.busy;
 
@@ -249,7 +280,9 @@
     s.style.animation = '';
   };
 
+  // Chip status hasil opsional (tracker sudah menampilkan tahap pengantaran).
   P.setResultChip = function (text, tone) {
+    if (!this.el.resultChip) return;
     this.el.resultChip.textContent = text;
     this.el.resultChip.dataset.tone = tone;
   };

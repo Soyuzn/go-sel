@@ -52,16 +52,15 @@
   --max-w: 1440px;
 
   /* Permukaan (terang) */
-  --bg: var(--gs-green-50);
-  --bg-grid: rgba(0, 170, 19, 0.07);
+  --bg: #F3F5F4;
   --surface: #FFFFFF;
-  --surface-2: #F5FAF5;
-  --surface-3: #E7F4E8;
+  --surface-2: #F6F8F7;
+  --surface-3: #ECF0EE;
   --text: var(--gs-ink-900);
-  --text-muted: #4A5D52;
-  --text-soft: #6B7E73;
-  --border: #D6E8D9;
-  --border-strong: #A8CEAE;
+  --text-muted: #4D5C54;
+  --text-soft: #6E7D75;
+  --border: #E2E7E4;
+  --border-strong: #C5D0CA;
   --accent: var(--gs-green-600);
   --accent-strong: var(--gs-green-800);
   --accent-hover: var(--gs-green-900);
@@ -76,10 +75,9 @@
   --warn-text: #7A5300;
   --gold: #E8A100;
 
-  --shadow-sm: 0 1px 2px rgba(20, 32, 26, 0.06), 0 1px 1px rgba(20, 32, 26, 0.04);
-  --shadow: 0 12px 32px -14px rgba(0, 89, 13, 0.28), 0 2px 6px rgba(20, 32, 26, 0.06);
-  --shadow-lg: 0 24px 60px -20px rgba(0, 89, 13, 0.4), 0 4px 12px rgba(20, 32, 26, 0.08);
-  --wallet-grad: linear-gradient(135deg, #00AA13 0%, #008C15 55%, #00590D 100%);
+  --shadow-sm: 0 1px 2px rgba(20, 32, 26, 0.06);
+  --shadow-lg: 0 18px 48px -16px rgba(20, 32, 26, 0.35), 0 2px 8px rgba(20, 32, 26, 0.08);
+  --wallet-bg: #007A12;
 
   /* Warna canvas (dibaca JS lewat getComputedStyle) */
   --cell-empty: #FFFFFF;
@@ -104,7 +102,6 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
     --bg: #0E1512;
-    --bg-grid: rgba(108, 194, 74, 0.05);
     --surface: #16201B;
     --surface-2: #1B2721;
     --surface-3: #22312A;
@@ -121,9 +118,8 @@
     --warn-soft: #3A2E10;
     --warn-text: #FFD36B;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
-    --wallet-grad: linear-gradient(135deg, #00961A 0%, #007A12 50%, #0B3D14 100%);
+    --wallet-bg: #0B5E17;
 
     --cell-empty: #1F2B25;
     --cell-line: rgba(232, 243, 234, 0.06);
@@ -139,7 +135,6 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #0E1512;
-  --bg-grid: rgba(108, 194, 74, 0.05);
   --surface: #16201B;
   --surface-2: #1B2721;
   --surface-3: #22312A;
@@ -156,9 +151,8 @@
   --warn-soft: #3A2E10;
   --warn-text: #FFD36B;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
-  --wallet-grad: linear-gradient(135deg, #00961A 0%, #007A12 50%, #0B3D14 100%);
+  --wallet-bg: #0B5E17;
 
   --cell-empty: #1F2B25;
   --cell-line: rgba(232, 243, 234, 0.06);

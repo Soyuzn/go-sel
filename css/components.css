@@ -4,8 +4,7 @@
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  border-radius: 20px;
   padding: var(--sp-5);
   min-width: 0;
   transition: background-color 0.3s ease, border-color 0.3s ease;
@@ -16,13 +15,7 @@
   gap: 10px;
   font-size: var(--fs-lg);
 }
-.section-title > .ico {
-  width: 34px; height: 34px;
-  padding: 7px;
-  border-radius: 11px;
-  background: var(--accent-soft);
-  color: var(--accent-text);
-}
+.section-title > .ico { display: none; }
 .section-head {
   display: flex;
   flex-wrap: wrap;
@@ -73,7 +66,6 @@
   --btn-bg: var(--accent-strong);
   --btn-fg: var(--on-accent);
   --btn-border: var(--accent-strong);
-  box-shadow: 0 6px 16px -8px rgba(0, 122, 18, 0.7);
 }
 .btn--primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--on-accent); }
 .btn--outline { --btn-bg: transparent; }
@@ -142,21 +134,22 @@
   border-radius: var(--radius-lg);
   padding: var(--sp-5);
   color: #fff;
-  background: var(--wallet-grad);
-  box-shadow: var(--shadow-lg);
+  background-color: var(--wallet-bg);
   isolation: isolate;
 }
-/* Ornamen sel/kotak di latar kartu */
-.wallet::before, .wallet::after {
+/* Motif sel peta yang memudar ke kiri */
+.wallet::before {
   content: "";
   position: absolute;
+  inset: 0;
   z-index: -1;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.08);
-  transform: rotate(18deg);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 20px 20px;
+  -webkit-mask-image: linear-gradient(100deg, transparent 35%, #000 100%);
+  mask-image: linear-gradient(100deg, transparent 35%, #000 100%);
 }
-.wallet::before { width: 180px; height: 180px; right: -50px; top: -70px; }
-.wallet::after { width: 110px; height: 110px; right: 70px; bottom: -60px; background: rgba(255, 180, 0, 0.18); }
 .wallet__top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--sp-3); }
 .wallet__label { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: var(--fs-sm); opacity: 0.92; margin: 0; }
 .wallet__points { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 0; }
@@ -254,25 +247,30 @@
   gap: 6px;
   padding: var(--sp-4);
   border-radius: var(--radius);
-  background:
-    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--tone) 22%, transparent), transparent 60%),
-    var(--surface);
+  background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, transform 0.2s;
 }
-.promo-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.promo-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.promo-card__thumb {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 1;
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+}
 .promo-card__tag {
   align-self: flex-start;
-  padding: 2px 10px;
-  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: var(--fs-2xs);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #fff;
-  background: var(--tone);
+  color: var(--text-muted);
 }
+.promo-card__tag::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--tone); }
 .promo-card__title { font-size: var(--fs-base); }
 .promo-card__desc { font-size: var(--fs-sm); color: var(--text-muted); margin: 0; flex: 1; }
 .promo-card__btn { align-self: flex-start; margin-top: 4px; --btn-bg: var(--surface-2); }
@@ -309,16 +307,15 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 10px;
+  padding: 8px;
   border-radius: var(--radius);
   background: var(--surface-2);
-  border: 1px dashed var(--border-strong);
 }
 .map__canvas-wrap {
   position: relative;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 0 0 1px var(--border), var(--shadow-sm);
+  box-shadow: 0 0 0 1px var(--border);
   line-height: 0;
 }
 #peta {
@@ -429,24 +426,19 @@ input[type="range"]:focus-visible { outline-offset: 4px; }
 
 /* ---------- Panel kontrol ---------- */
 .controls { padding: var(--sp-3); }
-.group {
-  border-radius: var(--radius);
-  background: var(--surface);
-  border: 1px solid transparent;
-  transition: background-color 0.2s, border-color 0.2s;
-}
-.group + .group { margin-top: 4px; }
-.group[open] { background: var(--surface-2); border-color: var(--border); }
-@media (min-width: 640px) and (max-width: 1023px) { .group + .group { margin-top: 0; } }
+.group { border-bottom: 1px solid var(--border); }
+.group:last-child { border-bottom: 0; }
 .group__summary {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--radius);
+  padding: 14px 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   list-style: none;
-  font-weight: 700;
+  font-weight: 800;
+  font-size: var(--fs-base);
+  letter-spacing: -0.01em;
   user-select: none;
 }
 .group__summary::-webkit-details-marker { display: none; }
@@ -460,18 +452,11 @@ input[type="range"]:focus-visible { outline-offset: 4px; }
   transition: transform 0.25s;
 }
 .group[open] > .group__summary::after { transform: rotate(225deg) translateY(-1px); }
-.group__summary:hover { background: var(--surface-3); }
-.group__icon {
-  display: grid; place-items: center;
-  width: 32px; height: 32px;
-  border-radius: 10px;
-  background: var(--accent-soft);
-  color: var(--accent-text);
-}
-.group__icon .ico { width: 18px; height: 18px; }
+.group__summary:hover { background: var(--surface-2); }
+.group__icon { display: none; }
 .group__title { flex: 1; }
 .group__meta { font-size: var(--fs-xs); font-weight: 700; color: var(--accent-text); background: var(--accent-soft); padding: 2px 10px; border-radius: 99px; }
-.group__body { padding: 4px 12px 14px; display: grid; gap: 12px; }
+.group__body { padding: 0 8px 18px; display: grid; gap: 14px; }
 .group[open] .group__body { animation: drop 0.25s ease; }
 @keyframes drop { from { opacity: 0; transform: translateY(-6px); } }
 
@@ -538,7 +523,7 @@ input[type="range"]:focus-visible { outline-offset: 4px; }
 .switch__text small { color: var(--text-muted); font-weight: 500; }
 
 /* Bidak */
-.pieces { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.pieces { display: grid; grid-template-columns: 1fr; gap: 8px; }
 .piece {
   display: flex;
   align-items: center;
@@ -753,20 +738,24 @@ input[type="number"]:focus { border-color: var(--accent); outline: none; box-sha
 
 .insight {
   margin: var(--sp-4) 0 0;
-  padding: 12px 14px 12px 44px;
-  position: relative;
+  padding: 12px 14px;
   border-radius: var(--radius-sm);
-  background: var(--warn-soft);
+  border-left: 4px solid var(--gs-amber-500);
+  background: var(--surface-2);
   color: var(--text);
   font-size: var(--fs-sm);
   font-weight: 600;
   animation: slide-in 0.4s ease;
 }
 .insight::before {
-  content: "💡";
-  position: absolute;
-  left: 14px; top: 11px;
-  font-size: 1.1em;
+  content: "Insight dari data";
+  display: block;
+  margin-bottom: 4px;
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--warn-text);
 }
 
 /* ---------- Perbandingan ---------- */
@@ -1043,3 +1032,21 @@ input[type="number"]:focus { border-color: var(--accent); outline: none; box-sha
 @keyframes fall {
   to { transform: translate(var(--dx, 0), 105vh) rotate(var(--rot, 540deg)); opacity: 0.6; }
 }
+
+/* ---------- Pill poin di app bar ---------- */
+.points-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px 0 8px;
+  margin-right: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  text-decoration: none;
+}
+.points-pill .ico { width: 20px; height: 20px; }
+.points-pill:hover { background: var(--surface-3); }

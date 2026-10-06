@@ -131,7 +131,7 @@
 
 /* ---------- Tablet ---------- */
 @media (min-width: 640px) {
-  .home { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: stretch; }
+  .home { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
   .controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); align-items: start; }
   .site-footer__inner { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .site-footer__meta { grid-column: 1 / -1; }

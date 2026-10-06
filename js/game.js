@@ -269,7 +269,8 @@
     var ids = ns.ALGO_ORDER, found = all.dijkstra.found;
     var gens = [];
 
-    gens.push(function () {
+    // Di peta tanpa jalur semua algoritma menjelajah area yang sama, soal ini jadi tidak bermakna.
+    if (found) gens.push(function () {
       var min = Math.min.apply(null, ids.map(function (id) { return all[id].visitedCount; }));
       var ok = ids.filter(function (id) { return all[id].visitedCount === min; });
       return {

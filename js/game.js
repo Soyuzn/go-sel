@@ -107,8 +107,10 @@
     return parts.join(' · ') + (stars < 5 ? '. Coba algoritma lain untuk bintang lima!' : '. Sempurna!');
   };
 
-  /* Dipanggil setelah animasi selesai. Mengembalikan jumlah bintang. */
+  /* Dipanggil setelah animasi selesai.
+   * Mengembalikan { stars, ratingPoints, missions: [{title, reward}], earned } untuk struk order. */
   P.onRun = function (ctx) {
+    var before = this.points, ratingPoints = 0;
     if (this.tried.indexOf(ctx.algo) === -1) this.tried.push(ctx.algo);
     var m = ctx.all[ctx.algo];
     var stars = this.rate(ctx.algo, ctx.all);
@@ -121,15 +123,16 @@
       this.history = this.history.slice(0, 8);
       if (!this.rewarded[key]) {
         this.rewarded[key] = true;
-        this.addPoints(stars * 4, 'paket terkirim ' + '★'.repeat(stars));
+        ratingPoints = stars * 4;
+        this.addPoints(ratingPoints, null);
       }
     }
     ctx.type = 'run';
     ctx.stars = stars;
-    this.evaluate(ctx);
+    var newly = this.evaluate(ctx, true);
     this.renderHistory();
     this.save();
-    return stars;
+    return { stars: stars, ratingPoints: ratingPoints, missions: newly, earned: this.points - before };
   };
 
   P.onCompare = function () { this.evaluate({ type: 'compare' }); };
@@ -143,7 +146,8 @@
     this.save();
   };
 
-  P.evaluate = function (ctx) {
+  // quiet = true: poin misi tidak diumumkan lewat toast (ditampilkan di struk order).
+  P.evaluate = function (ctx, quiet) {
     ctx.tried = this.tried;
     ctx.quizCorrect = this.quizCorrect;
     var self = this, newly = [];
@@ -155,12 +159,13 @@
     });
     if (newly.length) {
       newly.forEach(function (ms) {
-        self.addPoints(ms.reward, 'Misi "' + ms.title + '" selesai');
+        self.addPoints(ms.reward, quiet ? null : 'Misi "' + ms.title + '" selesai');
       });
-      if (this.hooks.confetti) this.hooks.confetti();
+      if (!quiet && this.hooks.confetti) this.hooks.confetti();
       this.renderMissions(newly.map(function (m) { return m.id; }));
       this.save();
     }
+    return newly;
   };
 
   P.reset = function () {

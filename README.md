@@ -54,6 +54,11 @@ Uji logika algoritma: buka `tests.html` (48 assertion otomatis, tampil hijau/mer
 - **Rating bintang** tiap pengantaran (optimal? hemat sel?), ongkir main-main, riwayat order.
 - **Kuis tebak algoritma** yang soal dan jawabannya dihitung dari peta saat ini.
 
+**Struk order & suara**
+- Setelah paket terkirim muncul **struk order** bergaya kertas kasir (animasi cetak, stempel, barcode): waktu komputasi, sel dijelajahi, panjang jalur, biaya vs optimal, rincian ongkir, SelPoin & misi yang didapat, dan insight.
+- **Suara berpikir** (Web Audio API, tanpa file audio): tiap sel yang diproses berbunyi; makin dekat ke tujuan, makin tinggi nadanya. Plus SFX (taruh bidak, gambar gedung, rute ketemu, terkirim, gagal) dan musik latar generatif saat algoritma berjalan. Bisa dibisukan.
+- **Panduan 3 langkah** untuk pengguna baru (kurir → tujuan → Jalankan); kontrol lain muncul bertahap.
+
 **Lainnya**
 - Default tema terang; mode gelap (hampir hitam) lewat tombol di app bar, dengan transisi lingkaran View Transitions API.
 - Simpan/muat peta (`localStorage`), ekspor/impor JSON (atau seret file .json ke peta).
@@ -82,7 +87,7 @@ solve(cells, rows, cols, start, goal, { diagonal, record })
 
 - **HTML5:** `header`, `nav`, `main`, `section`, `aside`, `article`, `figure`/`figcaption`, `footer`; 2+ `<canvas>`; Drag and Drop API; `<dialog>`; `<details>`/`<summary>`; `<output>`, `<progress>`, `<fieldset>`/`<legend>`; `<table>` dengan `caption`/`thead`/`scope`; `<template>`; `data-*`; ARIA (`aria-live`, `role="status"`); SVG inline.
 - **CSS:** design tokens (custom properties) tema terang/gelap, CSS Grid & Flexbox, `clamp()`, `aspect-ratio`, `color-mix()`, scroll-snap, slider/switch/segmented control kustom, animasi & transisi, `@media print`.
-- **JavaScript:** priority queue (binary min-heap) buatan sendiri, 5 algoritma, animator `requestAnimationFrame`, state machine (`IDLE → READY → RUNNING ⇄ PAUSED → DONE`), Pointer Events + Bresenham, benchmark median, maze generator (recursive backtracker), `ResizeObserver`, `IntersectionObserver`, Web Storage, File API, View Transitions API.
+- **JavaScript:** priority queue (binary min-heap) buatan sendiri, 5 algoritma, animator `requestAnimationFrame`, state machine (`IDLE → READY → RUNNING ⇄ PAUSED → DONE`), Pointer Events + Bresenham, benchmark median, maze generator (recursive backtracker), `ResizeObserver`, `IntersectionObserver`, Web Storage, File API, Web Audio API, View Transitions API.
 
 ## Struktur folder
 
@@ -124,6 +129,7 @@ assets/
 | ![Tanpa jalur](assets/screenshots/05-tidak-ada-jalur.png) Tidak ada jalur | ![Perbandingan](assets/screenshots/06-perbandingan.png) Tabel & bar chart |
 | ![Mobile](assets/screenshots/07-mobile.png) Tampilan mobile | ![Dark mode](assets/screenshots/08-dark-mode.png) Dark mode |
 | ![Misi](assets/screenshots/09-misi-gamifikasi.png) Misi & gamifikasi | ![Belajar](assets/screenshots/10-panel-belajar.png) Panel belajar |
+| ![Struk](assets/screenshots/11-struk-order.png) Struk order | |
 
 ## Kredit
 

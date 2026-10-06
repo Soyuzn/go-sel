@@ -162,12 +162,25 @@
         <div class="lab__head">
           <div>
             <h2 id="lab-title" class="section-title"><svg class="ico" aria-hidden="true"><use href="#i-map"/></svg>Peta kota</h2>
-            <p class="hint" id="hint">Seret kurir dan tujuan ke peta, lalu tekan dan geser untuk membuat gedung.</p>
+            <p class="hint" id="hint">Atur peta, tempatkan kurir dan tujuan, lalu jalankan algoritma.</p>
           </div>
           <div class="lab__chips">
             <span class="algo-pill" id="algo-pill" data-algo="astar">A*</span>
             <span class="chip" id="state-chip" data-state="idle">Siapkan bidak</span>
           </div>
+        </div>
+
+        <div class="coach" id="coach" role="region" aria-labelledby="coach-title" aria-live="polite">
+          <div class="coach__piece piece" draggable="true" data-piece="start" tabindex="0" role="button" aria-pressed="false" aria-describedby="coach-desc">
+            <svg class="piece__icon" aria-hidden="true"><use href="#i-courier"/></svg>
+            <span class="coach__grab">Seret aku</span>
+          </div>
+          <div class="coach__text">
+            <p class="coach__step" id="coach-step">Langkah 1 dari 3</p>
+            <p class="coach__title" id="coach-title">Seret kurir ke peta</p>
+            <p class="coach__desc" id="coach-desc">Tarik ikon kurir ke sel mana saja di peta. Di HP: ketuk ikonnya, lalu ketuk peta.</p>
+          </div>
+          <button class="btn btn--ghost btn--sm coach__skip" type="button" data-action="autoplace">Tempatkan otomatis</button>
         </div>
 
         <figure class="map">
@@ -178,11 +191,6 @@
                 Browser kamu tidak mendukung canvas HTML5.
               </canvas>
               <canvas id="peta-overlay" aria-hidden="true"></canvas>
-              <div class="map__empty" id="empty-state">
-                <svg class="map__empty-icon" aria-hidden="true"><use href="#i-pin"/></svg>
-                <p><strong>Ada paket yang perlu diantar!</strong><br>Seret <b>Kurir</b> dan <b>Alamat tujuan</b> dari panel ke peta.</p>
-                <button class="btn btn--primary btn--sm" type="button" data-action="autoplace">Tempatkan otomatis</button>
-              </div>
             </div>
           </div>
           <figcaption class="legend">
@@ -292,14 +300,14 @@
                 <svg class="ico piece__grip" aria-hidden="true"><use href="#i-grip"/></svg>
               </div>
             </div>
-            <p class="small muted" id="piece-help">Seret ke peta. Di layar sentuh: ketuk bidak, lalu ketuk sel tujuan. Bidak di peta bisa digeser langsung.</p>
+            <p class="small muted" id="piece-help">Seret ke peta, atau ketuk lalu ketuk sel. Bidak di peta bisa digeser langsung.</p>
             <button class="btn btn--soft btn--sm btn--block" type="button" data-action="autoplace">
               <svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg><span>Tempatkan otomatis</span>
             </button>
           </fieldset>
         </details>
 
-        <details class="group" open data-group="tools">
+        <details class="group" data-group="tools">
           <summary class="group__summary">
             <span class="group__icon"><svg class="ico" aria-hidden="true"><use href="#i-building"/></svg></span>
             <span class="group__title">Gambar rintangan</span>
@@ -391,6 +399,8 @@
         <div class="results__head">
           <h2 id="hasil-title" class="section-title"><svg class="ico" aria-hidden="true"><use href="#i-receipt"/></svg>Status pengantaran</h2>
         </div>
+
+        <p class="results__empty" id="results-empty">Belum ada pengantaran. Setelah kamu menekan <b>Jalankan</b>, status rute, waktu komputasi, dan rating muncul di sini.</p>
 
         <div class="driver">
           <span class="driver__avatar" aria-hidden="true"><svg><use href="#i-courier"/></svg></span>

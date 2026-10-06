@@ -55,7 +55,7 @@
       }
 
       var piece = app.grid.pieceAt(cell.r, cell.c);
-      cv.setPointerCapture(e.pointerId);
+      try { cv.setPointerCapture(e.pointerId); } catch (err) { /* pointer sintetis */ }
       if (piece) {
         self.stroke = { mode: 'move', piece: piece };
         app.renderer.ov.dragging = piece;

@@ -322,11 +322,13 @@
   function compareInsight(list) {
     var found = list.filter(function (m) { return m.found; });
     if (!found.length) return 'Kelima algoritma sepakat: tidak ada jalur. Perhatikan jumlah sel dikunjungi tetap berbeda karena urutan penjelajahan berbeda.';
-    var leastVisited = list.reduce(function (a, b) { return b.visited < a.visited ? b : a; });
-    var fastest = list.reduce(function (a, b) { return b.time < a.time ? b : a; });
+    // Hemat/cepat hanya berarti jika jalurnya juga optimal, jadi dibandingkan di antara yang optimal.
+    var optimal = found.filter(function (m) { return m.optimal; });
+    var leastVisited = optimal.reduce(function (a, b) { return b.visited < a.visited ? b : a; });
+    var fastest = optimal.reduce(function (a, b) { return b.time < a.time ? b : a; });
     var nonOpt = found.filter(function (m) { return !m.optimal; }).map(function (m) { return m.name; });
-    var s = leastVisited.name + ' paling hemat (' + fmtNum(leastVisited.visited) + ' sel dikunjungi) dan ' +
-      fastest.name + ' paling cepat (' + fmtNum(fastest.time, 3) + ' ms). ';
+    var s = 'Di antara yang menemukan jalur optimal, ' + leastVisited.name + ' paling hemat (' + fmtNum(leastVisited.visited) +
+      ' sel dikunjungi) dan ' + fastest.name + ' paling cepat (' + fmtNum(fastest.time, 3) + ' ms). ';
     s += nonOpt.length
       ? 'Yang tidak optimal di peta ini: ' + nonOpt.join(', ') + '.'
       : 'Semua algoritma kebetulan menemukan jalur optimal di peta ini.';

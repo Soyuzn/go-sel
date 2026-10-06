@@ -55,7 +55,7 @@ Uji logika algoritma: buka `tests.html` (48 assertion otomatis, tampil hijau/mer
 - **Kuis tebak algoritma** yang soal dan jawabannya dihitung dari peta saat ini.
 
 **Lainnya**
-- Mode gelap (ikut sistem + tombol manual, transisi lingkaran View Transitions API).
+- Default tema terang; mode gelap (hampir hitam) lewat tombol di app bar, dengan transisi lingkaran View Transitions API.
 - Simpan/muat peta (`localStorage`), ekspor/impor JSON (atau seret file .json ke peta).
 - Link skenario, misalnya `index.html?skenario=trap&algo=greedy&selesai`.
 - Pintasan keyboard: `Spasi` jalan/jeda, `S` langkah, `F` selesaikan, `R` ulangi, `C` hapus gedung, `D` diagonal, `1`–`5` algoritma. Peta bisa dioperasikan dengan panah + `Enter`/`K`/`T`.

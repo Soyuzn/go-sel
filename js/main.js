@@ -87,12 +87,19 @@
       this.watchTheme();
       document.getElementById('kontrol').scrollTop = 0;
       this.openFromLink();
+
+      // Kunjungan pertama (bukan dari link skenario): tampilkan cara pakai.
+      if (location.search.length <= 1 && !ns.store.get('seen-help', false)) {
+        ns.store.set('seen-help', true);
+        setTimeout(function () { document.getElementById('dlg-help').showModal(); }, 400);
+      }
     },
 
     /* Link skenario, misalnya index.html?skenario=trap&algo=astar&selesai
      *   skenario : id skenario      algo  : algoritma yang dipilih
      *   langkah  : jalankan N langkah lalu jeda      selesai : langsung ke hasil
-     *   banding  : isi tabel perbandingan */
+     *   banding  : isi tabel perbandingan          lihat : id bagian yang langsung ditampilkan
+     *   tema     : terang | gelap */
     openFromLink: function () {
       var q = new URLSearchParams(location.search);
       if (q.get('tema') === 'gelap' || q.get('tema') === 'terang') {
@@ -109,12 +116,8 @@
         this.finish();
       }
       if (q.has('banding')) this.compareAll();
-
-      var fromLink = /skenario=/.test(location.search);
-      if (!fromLink && !ns.store.get('seen-help', false)) {
-        ns.store.set('seen-help', true);
-        setTimeout(function () { document.getElementById('dlg-help').showModal(); }, 400);
-      }
+      var target = document.getElementById(q.get('lihat') || '');
+      if (target) setTimeout(function () { target.scrollIntoView({ behavior: 'instant' }); }, 50);
     },
 
     /* ---------- Perubahan peta ---------- */

@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#00AA13" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0E1512" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Go-Sel: virtual lab Berpikir Komputasional untuk mempelajari algoritma pencarian jalur (BFS, DFS, Dijkstra, A*, Greedy) lewat simulasi kurir di peta grid.">
+  <meta name="author" content="Mishael Gilland (18224005)">
+  <title>Go-Sel · Virtual Lab Pathfinding</title>
+  <link rel="icon" href="assets/icons/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <script>
+    // Terapkan tema tersimpan sebelum render supaya tidak berkedip.
+    try {
+      var t = localStorage.getItem('go-sel:theme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (e) { /* localStorage tidak tersedia */ }
+  </script>
+  <!-- Urutan mengikuti dependensi. Classic script + namespace window.GoSel
+       supaya index.html bisa dibuka langsung lewat file://. -->
+  <script defer src="js/algorithms/common.js"></script>
+  <script defer src="js/algorithms/bfs.js"></script>
+  <script defer src="js/algorithms/dfs.js"></script>
+  <script defer src="js/algorithms/dijkstra.js"></script>
+  <script defer src="js/algorithms/astar.js"></script>
+  <script defer src="js/algorithms/greedy.js"></script>
+  <script defer src="js/grid.js"></script>
+  <script defer src="js/state.js"></script>
+  <script defer src="js/maze.js"></script>
+  <script defer src="js/scenarios.js"></script>
+  <script defer src="js/renderer.js"></script>
+  <script defer src="js/animator.js"></script>
+  <script defer src="js/stats.js"></script>
+  <script defer src="js/game.js"></script>
+  <script defer src="js/input.js"></script>
+  <script defer src="js/ui.js"></script>
+  <script defer src="js/main.js"></script>
+</head>
+<body>
+  <!-- Sprite ikon SVG inline (dipakai ulang lewat <use>) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="i-logo" viewBox="0 0 48 48">
+      <path d="M24 3C14.6 3 7 10.4 7 19.6 7 31.8 24 45 24 45s17-13.2 17-25.4C41 10.4 33.4 3 24 3z" fill="#00AA13"/>
+      <rect x="13.5" y="9.5" width="21" height="21" rx="5.5" fill="#fff"/>
+      <rect x="16.5" y="12.5" width="7" height="7" rx="1.8" fill="#00AA13"/>
+      <rect x="24.5" y="12.5" width="7" height="7" rx="1.8" fill="#BCE194"/>
+      <rect x="16.5" y="20.5" width="7" height="7" rx="1.8" fill="#BCE194"/>
+      <rect x="24.5" y="20.5" width="7" height="7" rx="1.8" fill="#FFB400"/>
+    </symbol>
+    <symbol id="i-courier" viewBox="0 0 48 48">
+      <circle cx="24" cy="24" r="21.5" fill="#00AA13" stroke="#fff" stroke-width="3"/>
+      <rect x="9.5" y="14.5" width="11" height="9" rx="2" fill="#FFB400"/>
+      <path d="M12.5 19h5" stroke="#14201A" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+      <g fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="14.5" cy="32" r="4"/>
+        <circle cx="34" cy="32" r="4"/>
+        <path d="M14.5 32h10.5l4.5-12.5"/>
+        <path d="M26.5 18.5h6.5"/>
+        <path d="M29.5 20L34 32"/>
+        <path d="M11.5 27h11"/>
+      </g>
+    </symbol>
+    <symbol id="i-pin" viewBox="0 0 48 48">
+      <path d="M24 3C15.2 3 8 10 8 18.8 8 30.4 24 45 24 45s16-14.6 16-26.2C40 10 32.8 3 24 3z" fill="#FFB400" stroke="#14201A" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="24" cy="19" r="8.5" fill="#fff" stroke="#14201A" stroke-width="2"/>
+      <path d="M19.5 20.2L24 16l4.5 4.2V24h-9z" fill="#14201A"/>
+    </symbol>
+
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6a.8.8 0 0 0 1.2.7l10.6-6.8a.8.8 0 0 0 0-1.4L9.2 4.5A.8.8 0 0 0 8 5.2z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1.2" fill="currentColor" stroke="none"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-step" viewBox="0 0 24 24"><path d="M5.5 5.6v12.8a.8.8 0 0 0 1.2.7l9.4-6.4a.8.8 0 0 0 0-1.4L6.7 4.9a.8.8 0 0 0-1.2.7z" fill="currentColor" stroke="none"/><rect x="16.8" y="5" width="2.8" height="14" rx="1.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-finish" viewBox="0 0 24 24"><path d="M3 6.2v11.6a.7.7 0 0 0 1.1.6l7.4-5.8a.7.7 0 0 0 0-1.2L4.1 5.6A.7.7 0 0 0 3 6.2zM11 6.2v11.6a.7.7 0 0 0 1.1.6l7.4-5.8a.7.7 0 0 0 0-1.2l-7.4-5.8a.7.7 0 0 0-1.1.6z" fill="currentColor" stroke="none"/><rect x="19.4" y="5" width="2.4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><path d="M9.4 9.4a2.7 2.7 0 1 1 3.8 2.5c-.7.3-1.2 1-1.2 1.8v.6"/><circle cx="12" cy="17.2" r=".9" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r=".9" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7.5h2M13 7.5h2M9 11.5h2M13 11.5h2M10.5 21v-4h3v4"/></symbol>
+    <symbol id="i-jam" viewBox="0 0 24 24"><path d="M12 3.5L17.6 20H6.4z"/><path d="M8.6 13.6h6.8M10 9.2h4"/><path d="M4 20.5h16"/></symbol>
+    <symbol id="i-eraser" viewBox="0 0 24 24"><path d="M15.6 3.8l4.6 4.6-9.6 9.6H6.4l-2.6-2.6z"/><path d="M11 20.5h9"/><path d="M9 9.8l5.2 5.2"/></symbol>
+    <symbol id="i-maze" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M7.5 3v8.5h4M16.5 21v-8.5h-4M3 16h4.5M21 8h-4.5v4.5"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-bfs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="5.8"/><circle cx="12" cy="12" r="9.3" stroke-dasharray="2.6 2.6"/></symbol>
+    <symbol id="i-dfs" viewBox="0 0 24 24"><path d="M5 3.5v6h9.5v5H8v6"/><path d="M5 17.8l3 3 3-3"/><circle cx="5" cy="3.5" r="1.4" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-dijkstra" viewBox="0 0 24 24"><circle cx="5" cy="6.5" r="2.3"/><circle cx="19" cy="6.5" r="2.3"/><circle cx="12" cy="18.5" r="2.3"/><path d="M7.3 6.5h9.4M6.2 8.6l4.6 7.8M17.8 8.6l-4.6 7.8"/></symbol>
+    <symbol id="i-astar" viewBox="0 0 24 24"><path d="M12 3.2l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.6l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/></symbol>
+    <symbol id="i-greedy" viewBox="0 0 24 24"><path d="M4.5 3.5h4.5v8a3 3 0 0 0 6 0v-8h4.5v8a7.5 7.5 0 0 1-15 0z"/><path d="M4.5 7.5H9M15 7.5h4.5"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4L3 6.5V20l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3.5 20.5h17"/><rect x="5" y="11" width="3.4" height="7" rx="1"/><rect x="10.3" y="5" width="3.4" height="13" rx="1"/><rect x="15.6" y="8.5" width="3.4" height="9.5" rx="1"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.5c-1.8-1.6-4.6-2.4-8-2.3v14.3c3.4-.1 6.2.7 8 2.3 1.8-1.6 4.6-2.4 8-2.3V4.2c-3.4-.1-6.2.7-8 2.3z"/><path d="M12 6.5v14"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><circle cx="12" cy="12" r="5.2"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.2 1.1 2V16h5v-.2c0-.8.4-1.5 1.1-2A6 6 0 0 0 12 3z"/></symbol>
+    <symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="15" r="5.5"/><path d="M8.6 3h6.8L13 9.8M8.6 3L11 9.8"/><path d="M12 12.6l.8 1.6 1.7.2-1.2 1.2.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.2 1.7-.2z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3.8 12a8.2 8.2 0 1 0 2.4-5.8"/><path d="M3.5 3.8v4.4h4.4"/><path d="M12 7.8V12l3 2"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11A8 8 0 0 0 5.6 6.4L3.8 8.2"/><path d="M3.8 3.8v4.4h4.4"/><path d="M4 13a8 8 0 0 0 14.4 4.6l1.8-1.8"/><path d="M20.2 20.2v-4.4h-4.4"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4h3.8l2.2 2.2h7A2.5 2.5 0 0 1 21 8.7v8.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 20V9M7 13.5l5-5 5 5M5 4h14"/></symbol>
+    <symbol id="i-grip" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></g></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><path d="M14.8 8.6h-3.6a1.9 1.9 0 0 0 0 3.8h1.6a1.9 1.9 0 0 1 0 3.8H9.2M12 6.6v2M12 16.2v1.6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-ruler" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 7v3M11 7v4.5M15 7v3M19 7v4.5"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5.5 21V3.5"/><path d="M5.5 4h12l-2.5 4.5 2.5 4.5h-12"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2.5L4.5 14H11l-1 7.5L19.5 10H13z"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M7.5 14h9"/></symbol>
+  </svg>
+
+  <a class="skip-link" href="#lab">Langsung ke lab</a>
+
+  <header class="appbar">
+    <div class="appbar__inner">
+      <a class="brand" href="#top" aria-label="Go-Sel, kembali ke atas">
+        <svg class="brand__logo" aria-hidden="true"><use href="#i-logo"/></svg>
+        <span class="brand__text">
+          <span class="brand__name">Go-Sel</span>
+          <span class="brand__tag">Antar lewat sel, lihat algoritmanya mikir.</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Navigasi bagian">
+        <a href="#lab">Lab</a>
+        <a href="#hasil">Hasil</a>
+        <a href="#perbandingan">Bandingkan</a>
+        <a href="#belajar">Belajar</a>
+        <a href="#misi">Misi</a>
+      </nav>
+      <div class="appbar__actions">
+        <button class="btn btn--ghost btn--sm" id="btn-help" type="button">
+          <svg class="ico" aria-hidden="true"><use href="#i-help"/></svg><span class="hide-sm">Cara pakai</span>
+        </button>
+        <button class="btn btn--ghost btn--sm" id="btn-about" type="button">
+          <svg class="ico" aria-hidden="true"><use href="#i-info"/></svg><span class="hide-sm">Tentang</span>
+        </button>
+        <button class="icon-btn" id="btn-theme" type="button" aria-label="Ganti tema terang/gelap" title="Ganti tema">
+          <svg class="ico ico--sun" aria-hidden="true"><use href="#i-sun"/></svg>
+          <svg class="ico ico--moon" aria-hidden="true"><use href="#i-moon"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top" class="page">
+    <!-- ============ Beranda: dompet poin + skenario ============ -->
+    <section class="home" aria-label="Beranda">
+      <article class="wallet" aria-labelledby="wallet-title">
+        <div class="wallet__top">
+          <div class="wallet__balance">
+            <p class="wallet__label" id="wallet-title"><svg class="ico" aria-hidden="true"><use href="#i-coin"/></svg> SelPoin kamu</p>
+            <p class="wallet__points"><output id="points" aria-live="polite">0</output><span>poin</span></p>
+          </div>
+          <div class="wallet__level">
+            <span class="wallet__badge" id="level-name">Kurir Baru</span>
+            <progress id="level-progress" max="100" value="0" aria-label="Kemajuan ke level berikutnya">0%</progress>
+            <small id="level-next">200 poin lagi ke Kurir Pemula</small>
+          </div>
+        </div>
+        <nav class="wallet__actions" aria-label="Aksi cepat">
+          <a class="wallet__action" href="#misi"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-target"/></svg></span>Misi</a>
+          <button class="wallet__action" type="button" id="btn-quiz"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg></span>Kuis</button>
+          <a class="wallet__action" href="#lencana"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-medal"/></svg></span>Lencana</a>
+          <a class="wallet__action" href="#riwayat"><span class="wallet__icon"><svg class="ico" aria-hidden="true"><use href="#i-history"/></svg></span>Riwayat</a>
+        </nav>
+      </article>
+
+      <div class="promo">
+        <div class="promo__head">
+          <h2 class="promo__title">Skenario siap coba</h2>
+          <p class="promo__sub">Geser untuk melihat. Tiap skenario memperlihatkan sifat satu algoritma.</p>
+        </div>
+        <ul class="promo__track" id="scenario-list" aria-label="Daftar skenario peta"></ul>
+      </div>
+    </section>
+
+    <div class="lab-layout">
+      <!-- ============ Lab: canvas peta ============ -->
+      <section id="lab" class="card lab" aria-labelledby="lab-title">
+        <div class="lab__head">
+          <div>
+            <h2 id="lab-title" class="section-title"><svg class="ico" aria-hidden="true"><use href="#i-map"/></svg>Peta kota</h2>
+            <p class="hint" id="hint">Seret kurir dan tujuan ke peta, lalu tekan dan geser untuk membuat gedung.</p>
+          </div>
+          <div class="lab__chips">
+            <span class="algo-pill" id="algo-pill" data-algo="astar">A*</span>
+            <span class="chip" id="state-chip" data-state="idle">Siapkan bidak</span>
+          </div>
+        </div>
+
+        <figure class="map">
+          <div class="map__stage" id="stage">
+            <div class="map__canvas-wrap" id="canvas-wrap">
+              <canvas id="peta" tabindex="0" aria-describedby="hint map-keys"
+                aria-label="Peta kota berbentuk grid sel. Fokuskan lalu gunakan tombol panah untuk memilih sel.">
+                Browser kamu tidak mendukung canvas HTML5.
+              </canvas>
+              <canvas id="peta-overlay" aria-hidden="true"></canvas>
+              <div class="map__empty" id="empty-state">
+                <svg class="map__empty-icon" aria-hidden="true"><use href="#i-pin"/></svg>
+                <p><strong>Ada paket yang perlu diantar!</strong><br>Seret <b>Kurir</b> dan <b>Alamat tujuan</b> dari panel ke peta.</p>
+                <button class="btn btn--primary btn--sm" type="button" data-action="autoplace">Tempatkan otomatis</button>
+              </div>
+            </div>
+          </div>
+          <figcaption class="legend">
+            <span class="legend__title">Legenda</span>
+            <ul class="legend__list">
+              <li><span class="sw sw--courier" aria-hidden="true"><svg><use href="#i-courier"/></svg></span>Kurir</li>
+              <li><span class="sw sw--pin" aria-hidden="true"><svg><use href="#i-pin"/></svg></span>Alamat tujuan</li>
+              <li><span class="sw sw--wall" aria-hidden="true"></span>Gedung</li>
+              <li><span class="sw sw--jam" aria-hidden="true"></span>Macet (biaya ×5)</li>
+              <li><span class="sw sw--frontier" aria-hidden="true"></span>Antrean (frontier)</li>
+              <li><span class="sw sw--current" aria-hidden="true"></span>Sedang diproses</li>
+              <li><span class="sw sw--visited" aria-hidden="true"></span>Sudah dikunjungi</li>
+              <li><span class="sw sw--path" aria-hidden="true"></span>Jalur akhir</li>
+            </ul>
+          </figcaption>
+        </figure>
+        <p class="sr-only" id="map-keys">Panah: pindah sel. Spasi atau Enter: gambar atau hapus gedung. K: taruh kurir. T: taruh tujuan.</p>
+        <p class="sr-only" id="cursor-live" aria-live="polite"></p>
+
+        <div class="playbar" role="group" aria-label="Kontrol animasi">
+          <div class="playbar__buttons">
+            <button class="btn btn--primary btn--lg" id="btn-run" type="button" aria-keyshortcuts="Space">
+              <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span>Jalankan</span>
+            </button>
+            <button class="btn btn--outline" id="btn-pause" type="button" disabled>
+              <svg class="ico" aria-hidden="true"><use href="#i-pause"/></svg><span>Jeda</span>
+            </button>
+            <button class="btn btn--outline" id="btn-step" type="button" aria-keyshortcuts="S" disabled>
+              <svg class="ico" aria-hidden="true"><use href="#i-step"/></svg><span>Langkah</span>
+            </button>
+            <button class="btn btn--outline" id="btn-finish" type="button" disabled>
+              <svg class="ico" aria-hidden="true"><use href="#i-finish"/></svg><span>Selesaikan</span>
+            </button>
+          </div>
+          <label class="speed" for="speed">
+            <span class="speed__label">Kecepatan</span>
+            <input type="range" id="speed" min="1" max="100" value="55" aria-describedby="speed-out">
+            <output id="speed-out" for="speed">Sedang</output>
+          </label>
+        </div>
+        <p class="run-hint" id="run-hint" role="note">Tempatkan kurir dan alamat tujuan dulu untuk menjalankan.</p>
+      </section>
+
+      <!-- ============ Panel kontrol ============ -->
+      <aside id="kontrol" class="card controls" aria-label="Panel kontrol">
+        <details class="group" open data-group="algo">
+          <summary class="group__summary">
+            <span class="group__icon"><svg class="ico" aria-hidden="true"><use href="#i-zap"/></svg></span>
+            <span class="group__title">Pilih algoritma</span>
+            <span class="group__meta" id="algo-meta">A*</span>
+          </summary>
+          <fieldset class="group__body">
+            <legend class="sr-only">Algoritma pencarian jalur</legend>
+            <div class="services">
+              <label class="service" style="--svc: var(--svc-bfs)" title="Breadth-First Search">
+                <input type="radio" name="algo" value="bfs">
+                <span class="service__icon"><svg class="ico" aria-hidden="true"><use href="#i-bfs"/></svg></span>
+                <span class="service__name">BFS</span>
+              </label>
+              <label class="service" style="--svc: var(--svc-dfs)" title="Depth-First Search">
+                <input type="radio" name="algo" value="dfs">
+                <span class="service__icon"><svg class="ico" aria-hidden="true"><use href="#i-dfs"/></svg></span>
+                <span class="service__name">DFS</span>
+              </label>
+              <label class="service" style="--svc: var(--svc-dijkstra)" title="Dijkstra">
+                <input type="radio" name="algo" value="dijkstra">
+                <span class="service__icon"><svg class="ico" aria-hidden="true"><use href="#i-dijkstra"/></svg></span>
+                <span class="service__name">Dijkstra</span>
+              </label>
+              <label class="service" style="--svc: var(--svc-astar)" title="A* Search">
+                <input type="radio" name="algo" value="astar" checked>
+                <span class="service__icon"><svg class="ico" aria-hidden="true"><use href="#i-astar"/></svg></span>
+                <span class="service__name">A*</span>
+              </label>
+              <label class="service" style="--svc: var(--svc-greedy)" title="Greedy Best-First Search">
+                <input type="radio" name="algo" value="greedy">
+                <span class="service__icon"><svg class="ico" aria-hidden="true"><use href="#i-greedy"/></svg></span>
+                <span class="service__name">Greedy</span>
+              </label>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="diagonal" role="switch">
+              <span class="switch__track" aria-hidden="true"></span>
+              <span class="switch__text">Gerakan diagonal <small>(8 arah, biaya √2)</small></span>
+            </label>
+            <p class="small muted">Heuristik A* &amp; Greedy: <output id="heuristic-out" class="mono">Manhattan</output></p>
+          </fieldset>
+        </details>
+
+        <details class="group" open data-group="pieces">
+          <summary class="group__summary">
+            <span class="group__icon"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg></span>
+            <span class="group__title">Bidak</span>
+            <span class="group__meta" id="pieces-meta">0/2</span>
+          </summary>
+          <fieldset class="group__body">
+            <legend class="sr-only">Kurir dan alamat tujuan</legend>
+            <div class="pieces">
+              <div class="piece" draggable="true" data-piece="start" tabindex="0" role="button" aria-pressed="false" aria-describedby="piece-help">
+                <svg class="piece__icon" aria-hidden="true"><use href="#i-courier"/></svg>
+                <span class="piece__text"><strong>Kurir</strong><small data-pos="start">Belum di peta</small></span>
+                <svg class="ico piece__grip" aria-hidden="true"><use href="#i-grip"/></svg>
+              </div>
+              <div class="piece" draggable="true" data-piece="goal" tabindex="0" role="button" aria-pressed="false" aria-describedby="piece-help">
+                <svg class="piece__icon" aria-hidden="true"><use href="#i-pin"/></svg>
+                <span class="piece__text"><strong>Alamat tujuan</strong><small data-pos="goal">Belum di peta</small></span>
+                <svg class="ico piece__grip" aria-hidden="true"><use href="#i-grip"/></svg>
+              </div>
+            </div>
+            <p class="small muted" id="piece-help">Seret ke peta. Di layar sentuh: ketuk bidak, lalu ketuk sel tujuan. Bidak di peta bisa digeser langsung.</p>
+            <button class="btn btn--soft btn--sm btn--block" type="button" data-action="autoplace">
+              <svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg><span>Tempatkan otomatis</span>
+            </button>
+          </fieldset>
+        </details>
+
+        <details class="group" open data-group="tools">
+          <summary class="group__summary">
+            <span class="group__icon"><svg class="ico" aria-hidden="true"><use href="#i-building"/></svg></span>
+            <span class="group__title">Gambar rintangan</span>
+          </summary>
+          <fieldset class="group__body">
+            <legend class="sr-only">Alat gambar</legend>
+            <div class="segmented" role="radiogroup" aria-label="Alat gambar">
+              <label><input type="radio" name="tool" value="1" checked><span><svg class="ico" aria-hidden="true"><use href="#i-building"/></svg>Gedung</span></label>
+              <label><input type="radio" name="tool" value="2"><span><svg class="ico" aria-hidden="true"><use href="#i-jam"/></svg>Macet</span></label>
+              <label><input type="radio" name="tool" value="0"><span><svg class="ico" aria-hidden="true"><use href="#i-eraser"/></svg>Hapus</span></label>
+            </div>
+            <p class="small muted">Sel pertama yang kamu sentuh menentukan mode: sel kosong → menggambar, sel terisi → menghapus.</p>
+            <div class="gen">
+              <button class="btn btn--outline btn--sm" type="button" id="btn-maze">
+                <svg class="ico" aria-hidden="true"><use href="#i-maze"/></svg><span>Maze acak</span>
+              </button>
+              <button class="btn btn--outline btn--sm" type="button" id="btn-random">
+                <svg class="ico" aria-hidden="true"><use href="#i-dice"/></svg><span>Gedung acak</span>
+              </button>
+            </div>
+            <label class="range-field" for="density">
+              <span>Kepadatan gedung acak</span>
+              <input type="range" id="density" min="0" max="40" value="25">
+              <output for="density" id="density-out" class="mono">25%</output>
+            </label>
+          </fieldset>
+        </details>
+
+        <details class="group" data-group="size">
+          <summary class="group__summary">
+            <span class="group__icon"><svg class="ico" aria-hidden="true"><use href="#i-ruler"/></svg></span>
+            <span class="group__title">Ukuran peta</span>
+            <span class="group__meta mono" id="size-meta">20 × 30</span>
+          </summary>
+          <fieldset class="group__body">
+            <legend class="sr-only">Ukuran grid</legend>
+            <div class="size-field">
+              <label for="rows-range">Baris</label>
+              <input type="range" id="rows-range" min="5" max="60" value="20" aria-controls="rows-num">
+              <input type="number" id="rows-num" min="5" max="60" value="20" inputmode="numeric" aria-label="Jumlah baris">
+            </div>
+            <div class="size-field">
+              <label for="cols-range">Kolom</label>
+              <input type="range" id="cols-range" min="5" max="100" value="30" aria-controls="cols-num">
+              <input type="number" id="cols-num" min="5" max="100" value="30" inputmode="numeric" aria-label="Jumlah kolom">
+            </div>
+            <p class="small muted">Total: <output id="cell-total" class="mono">600</output> sel. Gedung yang masih muat tetap dipertahankan.</p>
+          </fieldset>
+        </details>
+
+        <details class="group" data-group="data">
+          <summary class="group__summary">
+            <span class="group__icon"><svg class="ico" aria-hidden="true"><use href="#i-db"/></svg></span>
+            <span class="group__title">Peta &amp; data</span>
+          </summary>
+          <fieldset class="group__body">
+            <legend class="sr-only">Aksi peta</legend>
+            <div class="btn-grid">
+              <button class="btn btn--outline btn--sm" type="button" id="btn-clear-vis" title="Hapus hasil, gedung tetap (R)">
+                <svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg><span>Ulangi visualisasi</span>
+              </button>
+              <button class="btn btn--outline btn--sm" type="button" id="btn-clear-walls" title="Hapus semua gedung dan macet (C)">
+                <svg class="ico" aria-hidden="true"><use href="#i-building"/></svg><span>Hapus gedung</span>
+              </button>
+              <button class="btn btn--outline btn--sm" type="button" id="btn-save">
+                <svg class="ico" aria-hidden="true"><use href="#i-save"/></svg><span>Simpan peta</span>
+              </button>
+              <button class="btn btn--outline btn--sm" type="button" id="btn-load">
+                <svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg><span>Muat peta</span>
+              </button>
+              <button class="btn btn--outline btn--sm" type="button" id="btn-export">
+                <svg class="ico" aria-hidden="true"><use href="#i-download"/></svg><span>Ekspor JSON</span>
+              </button>
+              <label class="btn btn--outline btn--sm file-btn">
+                <svg class="ico" aria-hidden="true"><use href="#i-upload"/></svg><span>Impor JSON</span>
+                <input type="file" id="file-import" accept="application/json,.json" class="sr-only">
+              </label>
+            </div>
+            <button class="btn btn--danger btn--sm btn--block" type="button" id="btn-reset-all">
+              <svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span>Reset semua</span>
+            </button>
+            <p class="small muted">Tip: file peta .json juga bisa langsung diseret ke kanvas.</p>
+          </fieldset>
+        </details>
+      </aside>
+
+      <!-- ============ Hasil (status pengantaran) ============ -->
+      <section id="hasil" class="card results" aria-labelledby="hasil-title">
+        <div class="results__head">
+          <h2 id="hasil-title" class="section-title"><svg class="ico" aria-hidden="true"><use href="#i-receipt"/></svg>Status pengantaran</h2>
+          <span class="chip" id="result-chip" data-tone="idle">Belum jalan</span>
+        </div>
+
+        <div class="driver">
+          <span class="driver__avatar" aria-hidden="true"><svg><use href="#i-courier"/></svg></span>
+          <div class="driver__info">
+            <strong id="driver-name">Kurir A*</strong>
+            <small id="driver-sub">Priority queue (min-heap, kunci f = g + h)</small>
+          </div>
+          <div class="fare">
+            <small>Ongkir</small>
+            <output id="fare" class="mono">Rp0</output>
+          </div>
+        </div>
+
+        <ol class="tracker" id="tracker" aria-label="Tahap pengantaran">
+          <li data-step="search"><span class="tracker__dot"></span>Cari rute</li>
+          <li data-step="route"><span class="tracker__dot"></span>Rute ketemu</li>
+          <li data-step="deliver"><span class="tracker__dot"></span>Mengantar</li>
+          <li data-step="done"><span class="tracker__dot"></span>Terkirim</li>
+        </ol>
+
+        <p class="banner" id="status" role="status" aria-live="polite" data-tone="info">Tempatkan kurir dan alamat tujuan, lalu tekan Jalankan.</p>
+
+        <dl class="stats">
+          <div class="stat stat--hero"><dt>Waktu komputasi</dt><dd><output id="st-time" class="mono">–</output><span class="unit">ms</span></dd></div>
+          <div class="stat"><dt>Sel dikunjungi</dt><dd><output id="st-visited" class="mono">–</output></dd></div>
+          <div class="stat"><dt>Panjang jalur (sel)</dt><dd><output id="st-length" class="mono">–</output></dd></div>
+          <div class="stat"><dt>Total biaya</dt><dd><output id="st-cost" class="mono">–</output></dd></div>
+          <div class="stat"><dt>Langkah animasi</dt><dd><output id="st-steps" class="mono">–</output></dd></div>
+          <div class="stat"><dt>Isi frontier</dt><dd><output id="st-frontier" class="mono">–</output></dd></div>
+        </dl>
+
+        <div class="ds" aria-live="off">
+          <span class="ds__label">Struktur data: <strong id="ds-name">Priority queue</strong></span>
+          <ol class="ds__items" id="ds-items" aria-label="Isi struktur data (cuplikan)"></ol>
+        </div>
+
+        <div class="rating" id="rating" hidden>
+          <p class="rating__title">Paket terkirim! Rating pengantaran</p>
+          <div class="stars" id="stars" role="img" aria-label="0 dari 5 bintang"></div>
+          <p class="rating__note small" id="rating-note"></p>
+        </div>
+
+        <p class="insight" id="insight" aria-live="polite" hidden></p>
+      </section>
+    </div>
+
+    <!-- ============ Perbandingan ============ -->
+    <section id="perbandingan" class="card compare" aria-labelledby="cmp-title">
+      <div class="section-head">
+        <div>
+          <h2 id="cmp-title" class="section-title"><svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg>Perbandingan algoritma</h2>
+          <p class="muted">Hasil tiap algoritma tersimpan otomatis. Tekan <b>Bandingkan semua</b> untuk menjalankan kelimanya sekaligus tanpa animasi.</p>
+        </div>
+        <button class="btn btn--primary" type="button" id="btn-compare">
+          <svg class="ico" aria-hidden="true"><use href="#i-zap"/></svg><span>Bandingkan semua</span>
+        </button>
+      </div>
+      <div class="compare__grid">
+        <div class="table-wrap">
+          <table class="cmp-table" id="cmp-table">
+            <caption>Hasil pada peta saat ini <span class="chip chip--warn" id="stale" hidden>kedaluwarsa</span></caption>
+            <thead>
+              <tr>
+                <th scope="col">Algoritma</th>
+                <th scope="col" class="num">Waktu (ms)</th>
+                <th scope="col" class="num">Sel dikunjungi</th>
+                <th scope="col" class="num">Panjang jalur</th>
+                <th scope="col" class="num">Total biaya</th>
+                <th scope="col">Optimal?</th>
+              </tr>
+            </thead>
+            <tbody id="cmp-body">
+              <tr class="cmp-empty"><td colspan="6">Belum ada data. Jalankan satu algoritma atau tekan <b>Bandingkan semua</b>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure class="chart">
+          <canvas id="grafik" role="img" aria-label="Diagram batang sel dikunjungi dan waktu komputasi tiap algoritma">Diagram batang perbandingan.</canvas>
+          <figcaption class="small muted">Batang lebih pendek = lebih hemat. Batang bergaris menandai hasil terbaik.</figcaption>
+        </figure>
+      </div>
+      <p class="insight" id="cmp-insight" aria-live="polite" hidden></p>
+    </section>
+
+    <!-- ============ Panel belajar ============ -->
+    <section id="belajar" class="card learn" aria-labelledby="learn-title">
+      <div class="section-head">
+        <div>
+          <h2 id="learn-title" class="section-title"><svg class="ico" aria-hidden="true"><use href="#i-book"/></svg>Panel belajar</h2>
+          <p class="muted">Ringkasan tiap algoritma. Algoritma yang sedang dipilih terbuka otomatis.</p>
+        </div>
+      </div>
+      <div class="learn__grid">
+        <div class="learn__list">
+          <details class="algo-card" name="algo-info" data-algo="bfs" style="--svc: var(--svc-bfs)">
+            <summary>
+              <span class="algo-card__icon"><svg class="ico" aria-hidden="true"><use href="#i-bfs"/></svg></span>
+              <span class="algo-card__name"><strong>BFS</strong><small>Breadth-First Search</small></span>
+              <span class="tags"><span class="tag tag--ok">Optimal (langkah)</span></span>
+            </summary>
+            <article class="algo-card__body">
+              <p>BFS menjelajah seperti riak air: semua sel berjarak 1 langkah dari kurir diperiksa dulu, lalu 2 langkah, dan seterusnya. Sel baru masuk ke belakang antrean, sel terdepan diproses lebih dulu.</p>
+              <dl class="facts">
+                <div><dt>Struktur data</dt><dd>Queue (FIFO)</dd></div>
+                <div><dt>Kompleksitas</dt><dd>Waktu O(V + E), memori O(V)</dd></div>
+                <div><dt>Jalur terpendek?</dt><dd>Ya untuk jumlah langkah. Tidak menjamin biaya terkecil saat ada diagonal (√2) atau sel macet, karena BFS mengabaikan bobot.</dd></div>
+                <div><dt>Cocok untuk</dt><dd>Graf tanpa bobot, mencari langkah minimum, derajat pertemanan di jejaring sosial.</dd></div>
+              </dl>
+            </article>
+          </details>
+          <details class="algo-card" name="algo-info" data-algo="dfs" style="--svc: var(--svc-dfs)">
+            <summary>
+              <span class="algo-card__icon"><svg class="ico" aria-hidden="true"><use href="#i-dfs"/></svg></span>
+              <span class="algo-card__name"><strong>DFS</strong><small>Depth-First Search</small></span>
+              <span class="tags"><span class="tag tag--bad">Tidak optimal</span></span>
+            </summary>
+            <article class="algo-card__body">
+              <p>DFS menyusuri satu arah sedalam mungkin (urutan: atas, kanan, bawah, kiri) dan baru mundur (<i>backtrack</i>) saat buntu. Go-Sel memakai stack eksplisit, bukan rekursi, agar aman di grid besar.</p>
+              <dl class="facts">
+                <div><dt>Struktur data</dt><dd>Stack (LIFO)</dd></div>
+                <div><dt>Kompleksitas</dt><dd>Waktu O(V + E), memori O(V)</dd></div>
+                <div><dt>Jalur terpendek?</dt><dd>Tidak. Jalurnya sering berkelok sangat panjang.</dd></div>
+                <div><dt>Cocok untuk</dt><dd>Cek keterhubungan, deteksi siklus, topological sort, dan membuat maze (generator maze Go-Sel memakai ide DFS).</dd></div>
+              </dl>
+            </article>
+          </details>
+          <details class="algo-card" name="algo-info" data-algo="dijkstra" style="--svc: var(--svc-dijkstra)">
+            <summary>
+              <span class="algo-card__icon"><svg class="ico" aria-hidden="true"><use href="#i-dijkstra"/></svg></span>
+              <span class="algo-card__name"><strong>Dijkstra</strong><small>Biaya terkecil lebih dulu</small></span>
+              <span class="tags"><span class="tag tag--ok">Optimal</span><span class="tag">Berbobot</span></span>
+            </summary>
+            <article class="algo-card__body">
+              <p>Dijkstra selalu memproses sel dengan total biaya dari kurir (<i>g</i>) terkecil. Saat menemukan rute lebih murah ke tetangga, nilainya diperbarui (relaksasi). Karena tidak tahu letak tujuan, ia menyebar ke segala arah.</p>
+              <dl class="facts">
+                <div><dt>Struktur data</dt><dd>Priority queue (binary min-heap) dengan <i>lazy deletion</i></dd></div>
+                <div><dt>Kompleksitas</dt><dd>Waktu O((V + E) log V), memori O(V)</dd></div>
+                <div><dt>Jalur terpendek?</dt><dd>Ya, untuk semua biaya non-negatif, termasuk diagonal dan macet.</dd></div>
+                <div><dt>Cocok untuk</dt><dd>Peta berbobot (macet, tol), routing jaringan (OSPF), saat tujuan belum diketahui.</dd></div>
+              </dl>
+            </article>
+          </details>
+          <details class="algo-card" name="algo-info" data-algo="astar" style="--svc: var(--svc-astar)" open>
+            <summary>
+              <span class="algo-card__icon"><svg class="ico" aria-hidden="true"><use href="#i-astar"/></svg></span>
+              <span class="algo-card__name"><strong>A*</strong><small>Dijkstra + kompas heuristik</small></span>
+              <span class="tags"><span class="tag tag--ok">Optimal</span><span class="tag">Heuristik</span></span>
+            </summary>
+            <article class="algo-card__body">
+              <p>A* memilih sel dengan <i>f = g + h</i>: <i>g</i> biaya yang sudah ditempuh, <i>h</i> tebakan sisa jarak ke tujuan. Tebakan ini seperti kompas yang menarik pencarian ke arah tujuan. Bila <i>f</i> sama, Go-Sel memilih <i>h</i> terkecil.</p>
+              <dl class="facts">
+                <div><dt>Struktur data</dt><dd>Priority queue (binary min-heap), kunci f lalu h</dd></div>
+                <div><dt>Kompleksitas</dt><dd>Terburuk sama dengan Dijkstra, O((V + E) log V); dalam praktik mengunjungi jauh lebih sedikit sel.</dd></div>
+                <div><dt>Jalur terpendek?</dt><dd>Ya, selama heuristik <i>admissible</i> (tidak pernah melebihi biaya sebenarnya). Manhattan dan Octile memenuhinya.</dd></div>
+                <div><dt>Cocok untuk</dt><dd>Navigasi peta dan aplikasi ojek online, NPC di game, robot.</dd></div>
+              </dl>
+            </article>
+          </details>
+          <details class="algo-card" name="algo-info" data-algo="greedy" style="--svc: var(--svc-greedy)">
+            <summary>
+              <span class="algo-card__icon"><svg class="ico" aria-hidden="true"><use href="#i-greedy"/></svg></span>
+              <span class="algo-card__name"><strong>Greedy Best-First</strong><small>Kejar yang terdekat ke tujuan</small></span>
+              <span class="tags"><span class="tag tag--bad">Tidak optimal</span><span class="tag">Heuristik</span></span>
+            </summary>
+            <article class="algo-card__body">
+              <p>Greedy hanya melihat <i>h</i>, yaitu seberapa dekat sebuah sel ke tujuan, dan mengabaikan biaya yang sudah ditempuh. Ia cepat menyerbu ke arah tujuan, tapi mudah masuk "kantong buntu" dan menghasilkan jalur memutar.</p>
+              <dl class="facts">
+                <div><dt>Struktur data</dt><dd>Priority queue (binary min-heap), kunci h</dd></div>
+                <div><dt>Kompleksitas</dt><dd>Terburuk O((V + E) log V); sering sangat cepat di peta terbuka.</dd></div>
+                <div><dt>Jalur terpendek?</dt><dd>Tidak. Biaya jalan dan sel macet diabaikan.</dd></div>
+                <div><dt>Cocok untuk</dt><dd>Saat kecepatan lebih penting dari rute terbaik, misalnya perkiraan cepat.</dd></div>
+              </dl>
+            </article>
+          </details>
+        </div>
+
+        <div class="learn__side">
+          <article class="concept">
+            <h3>Heuristik: tebakan jarak</h3>
+            <p><b>Manhattan</b> (4 arah): <code>h = |Δx| + |Δy|</code></p>
+            <p><b>Octile</b> (8 arah): <code>h = max(Δx, Δy) + (√2 − 1) · min(Δx, Δy)</code></p>
+            <p class="small muted">Dipilih otomatis mengikuti tombol diagonal. Keduanya tidak pernah melebih-lebihkan jarak, jadi A* tetap optimal.</p>
+          </article>
+          <article class="concept">
+            <h3>Biaya langkah</h3>
+            <ul class="cost-list">
+              <li><span class="mono">1</span> langkah lurus</li>
+              <li><span class="mono">√2 ≈ 1,414</span> langkah diagonal</li>
+              <li><span class="mono">×5</span> masuk sel macet</li>
+            </ul>
+            <p class="small muted">BFS, DFS, dan Greedy mengabaikan biaya. Coba skenario <b>Jalan macet</b> untuk melihat BFS kalah dari Dijkstra.</p>
+          </article>
+          <article class="concept">
+            <h3>Tanpa potong sudut</h3>
+            <p class="small">Saat diagonal aktif, kurir tidak boleh menyelip di antara dua gedung yang bersentuhan sudut. Gerakan diagonal ditolak jika salah satu sel lurus yang diapit adalah gedung.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Misi, lencana, riwayat (gamifikasi) ============ -->
+    <section id="misi" class="card missions" aria-labelledby="misi-title">
+      <div class="section-head">
+        <div>
+          <h2 id="misi-title" class="section-title"><svg class="ico" aria-hidden="true"><use href="#i-target"/></svg>Misi kurir</h2>
+          <p class="muted">Selesaikan misi untuk mengumpulkan SelPoin dan naik level. Setiap misi melatih satu konsep algoritma.</p>
+        </div>
+        <div class="mission-progress">
+          <span><output id="mission-count" class="mono">0/0</output> selesai</span>
+          <progress id="mission-progress" max="1" value="0" aria-label="Misi selesai"></progress>
+        </div>
+      </div>
+      <div class="missions__grid">
+        <ul class="mission-list" id="mission-list" aria-label="Daftar misi"></ul>
+        <div class="missions__side">
+          <h3 id="lencana" class="sub-title"><svg class="ico" aria-hidden="true"><use href="#i-medal"/></svg>Lencana level</h3>
+          <ul class="badges" id="badge-list" aria-label="Lencana"></ul>
+          <h3 id="riwayat" class="sub-title"><svg class="ico" aria-hidden="true"><use href="#i-history"/></svg>Riwayat order</h3>
+          <ol class="history" id="history" aria-label="Riwayat pengantaran"></ol>
+          <button class="btn btn--ghost btn--sm" type="button" id="btn-reset-progress">
+            <svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg><span>Reset progres game</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <svg class="brand__logo" aria-hidden="true"><use href="#i-logo"/></svg>
+        <div>
+          <strong>Go-Sel</strong>
+          <p class="small">Virtual lab Berpikir Komputasional: algoritma pencarian jalur.</p>
+        </div>
+      </div>
+      <div class="site-footer__credit">
+        <p>Dibuat oleh <strong>Mishael Gilland</strong> · NIM 18224005</p>
+        <p>Sistem dan Teknologi Informasi, Institut Teknologi Bandung</p>
+        <p>Tugas <b>II3140 Web and Mobile Application Development</b> · Topik TPB: Berpikir Komputasional</p>
+      </div>
+      <div class="site-footer__meta small">
+        <p>HTML5, CSS3, dan JavaScript murni. Tanpa library, tanpa backend.</p>
+        <p>Tema hijau terinspirasi aplikasi ojek online. Go-Sel tidak berafiliasi dengan Gojek; logo dan ikon dibuat sendiri.</p>
+        <p><a href="tests.html">Uji algoritma (tests.html)</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Navigasi bawah">
+    <a href="#lab" data-nav="lab"><svg class="ico" aria-hidden="true"><use href="#i-map"/></svg><span>Lab</span></a>
+    <a href="#hasil" data-nav="hasil"><svg class="ico" aria-hidden="true"><use href="#i-receipt"/></svg><span>Hasil</span></a>
+    <a href="#perbandingan" data-nav="perbandingan"><svg class="ico" aria-hidden="true"><use href="#i-chart"/></svg><span>Banding</span></a>
+    <a href="#belajar" data-nav="belajar"><svg class="ico" aria-hidden="true"><use href="#i-book"/></svg><span>Belajar</span></a>
+    <a href="#misi" data-nav="misi"><svg class="ico" aria-hidden="true"><use href="#i-target"/></svg><span>Misi</span></a>
+  </nav>
+
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ============ Dialog ============ -->
+  <dialog id="dlg-help" class="dialog" aria-labelledby="help-title">
+    <form method="dialog" class="dialog__inner">
+      <header class="dialog__head">
+        <h2 id="help-title">Cara pakai Go-Sel</h2>
+        <button class="icon-btn" value="close" aria-label="Tutup"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </header>
+      <ol class="steps">
+        <li><b>Atur peta.</b> Pilih ukuran grid di panel <i>Ukuran peta</i>, atau langsung pakai skenario siap coba.</li>
+        <li><b>Tempatkan kurir dan tujuan.</b> Seret ikon <i>Kurir</i> dan <i>Alamat tujuan</i> ke peta. Di HP: ketuk ikon, lalu ketuk sel.</li>
+        <li><b>Gambar gedung.</b> Tekan dan geser di peta. Pilih alat <i>Macet</i> untuk jalan berbiaya 5, atau buat maze acak.</li>
+        <li><b>Pilih algoritma lalu jalankan.</b> Amati sel antrean, sel dikunjungi, dan jalur akhir. Bandingkan hasilnya di tabel.</li>
+      </ol>
+      <h3 class="sub-title"><svg class="ico" aria-hidden="true"><use href="#i-keyboard"/></svg>Pintasan keyboard</h3>
+      <table class="keys">
+        <caption class="sr-only">Pintasan keyboard</caption>
+        <tbody>
+          <tr><th scope="row"><kbd>Spasi</kbd></th><td>Jalankan / jeda / lanjut</td></tr>
+          <tr><th scope="row"><kbd>S</kbd></th><td>Satu langkah</td></tr>
+          <tr><th scope="row"><kbd>F</kbd></th><td>Selesaikan</td></tr>
+          <tr><th scope="row"><kbd>R</kbd></th><td>Ulangi visualisasi (gedung tetap)</td></tr>
+          <tr><th scope="row"><kbd>C</kbd></th><td>Hapus semua gedung</td></tr>
+          <tr><th scope="row"><kbd>1</kbd>–<kbd>5</kbd></th><td>Pilih algoritma</td></tr>
+          <tr><th scope="row"><kbd>D</kbd></th><td>Nyalakan / matikan diagonal</td></tr>
+          <tr><th scope="row">Di peta: <kbd>←↑↓→</kbd></th><td>Pilih sel; <kbd>Enter</kbd> gedung, <kbd>K</kbd> kurir, <kbd>T</kbd> tujuan</td></tr>
+        </tbody>
+      </table>
+      <footer class="dialog__foot">
+        <button class="btn btn--primary" value="close">Siap antar!</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-about" class="dialog" aria-labelledby="about-title">
+    <form method="dialog" class="dialog__inner">
+      <header class="dialog__head">
+        <h2 id="about-title">Tentang Go-Sel</h2>
+        <button class="icon-btn" value="close" aria-label="Tutup"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </header>
+      <p><b>Go-Sel</b> adalah virtual lab untuk mempelajari algoritma pencarian jalur (pathfinding) dalam materi Berpikir Komputasional. Kamu berperan sebagai pengatur rute kurir yang harus mengantar paket melewati kota berbentuk grid.</p>
+      <p>Tujuan belajar: memahami cara kerja BFS, DFS, Dijkstra, A*, dan Greedy Best-First secara visual, membandingkan optimalitas dan efisiensinya, serta memahami peran heuristik.</p>
+      <ul class="about-tech">
+        <li><b>HTML5</b>: elemen semantik, Canvas 2D, Drag and Drop API, &lt;dialog&gt;, &lt;details&gt;, &lt;output&gt;, &lt;template&gt;, &lt;progress&gt;.</li>
+        <li><b>CSS3</b>: custom properties, Grid &amp; Flexbox, <code>clamp()</code>, scroll-snap, mode gelap, animasi yang menghormati <code>prefers-reduced-motion</code>.</li>
+        <li><b>JavaScript</b>: 5 algoritma, priority queue (binary heap) buatan sendiri, animator <code>requestAnimationFrame</code>, Pointer Events + Bresenham, state machine, benchmark median, generator maze, sistem misi.</li>
+      </ul>
+      <p class="small muted">Dibuat oleh Mishael Gilland (18224005), Sistem dan Teknologi Informasi ITB, untuk tugas II3140 Web and Mobile Application Development.</p>
+      <footer class="dialog__foot">
+        <button class="btn btn--primary" value="close">Tutup</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-quiz" class="dialog" aria-labelledby="quiz-title">
+    <form method="dialog" class="dialog__inner" id="quiz-form">
+      <header class="dialog__head">
+        <h2 id="quiz-title"><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg>Kuis tebak algoritma</h2>
+        <button class="icon-btn" value="close" aria-label="Tutup" formnovalidate><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </header>
+      <p class="small muted" id="quiz-context"></p>
+      <fieldset class="quiz">
+        <legend id="quiz-question">…</legend>
+        <div class="quiz__options" id="quiz-options"></div>
+      </fieldset>
+      <p class="quiz__feedback" id="quiz-feedback" role="status" aria-live="polite" hidden></p>
+      <footer class="dialog__foot">
+        <button class="btn btn--ghost" type="button" id="quiz-next">Soal lain</button>
+        <button class="btn btn--primary" type="button" id="quiz-submit">Jawab</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- ============ Template ============ -->
+  <template id="tpl-row">
+    <tr>
+      <th scope="row"><span class="algo-dot"></span><span class="algo-name"></span></th>
+      <td class="num mono" data-col="time"></td>
+      <td class="num mono" data-col="visited"></td>
+      <td class="num mono" data-col="length"></td>
+      <td class="num mono" data-col="cost"></td>
+      <td data-col="optimal"></td>
+    </tr>
+  </template>
+
+  <template id="tpl-mission">
+    <li class="mission">
+      <span class="mission__icon" aria-hidden="true"><svg class="ico"><use href="#i-target"/></svg></span>
+      <div class="mission__text"><strong class="mission__title"></strong><small class="mission__desc"></small></div>
+      <span class="mission__reward mono"></span>
+    </li>
+  </template>
+
+  <template id="tpl-scenario">
+    <li class="promo-card">
+      <span class="promo-card__tag"></span>
+      <h3 class="promo-card__title"></h3>
+      <p class="promo-card__desc"></p>
+      <button class="btn btn--sm promo-card__btn" type="button">Coba skenario</button>
+    </li>
+  </template>
+</body>
+</html>

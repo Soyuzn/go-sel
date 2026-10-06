@@ -10,23 +10,21 @@
 
   /* Waktu komputasi murni (tanpa render dan tanpa perekaman event).
    * performance.now() di browser dibulatkan (5-100 µs), jadi tiap sampel menjalankan
-   * algoritma berulang sampai >= 2 ms lalu dibagi. Diambil median dari beberapa sampel. */
+   * algoritma berulang sampai >= 2 ms lalu dibagi. Diambil median dari maksimal 21
+   * sampel, dengan anggaran sekitar 60 ms supaya UI tidak membeku. */
   function timeSolve(algo, grid, diagonal) {
-    var cells = grid.cells, rows = grid.rows, cols = grid.cols;
-    var s = grid.startIndex(), g = grid.goalIndex(), opts = { diagonal: diagonal, record: false };
-    var t0 = performance.now();
-    algo.solve(cells, rows, cols, s, g, opts); // pemanasan
-    var one = Math.max(0.001, performance.now() - t0);
-    var batch = Math.max(1, Math.min(400, Math.ceil(2 / one)));
-    var samples = one > 15 ? 5 : (one > 4 ? 9 : 21);
-    var times = [];
-    for (var k = 0; k < samples; k++) {
-      var a = performance.now();
-      for (var b = 0; b < batch; b++) algo.solve(cells, rows, cols, s, g, opts);
-      times.push((performance.now() - a) / batch);
+    var opts = { diagonal: diagonal, record: false };
+    function once() { algo.solve(grid.cells, grid.rows, grid.cols, grid.startIndex(), grid.goalIndex(), opts); }
+    once(); // pemanasan
+    var times = [], deadline = performance.now() + 60;
+    for (var k = 0; k < 21; k++) {
+      var n = 0, start = performance.now(), elapsed;
+      do { once(); n++; elapsed = performance.now() - start; } while (elapsed < 2);
+      times.push(elapsed / n);
+      if (k >= 4 && performance.now() > deadline) break;
     }
     times.sort(function (x, y) { return x - y; });
-    return { median: times[times.length >> 1], samples: samples, batch: batch };
+    return { median: times[times.length >> 1], samples: times.length };
   }
 
   function metricsFrom(id, res, timeMs, refCost) {

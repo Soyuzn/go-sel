@@ -82,6 +82,7 @@
       }
       this.expanded++;
       this.lastCurrent = idx;
+      if (this.hooks.onExpand && this.playing) this.hooks.onExpand(idx);
       this.r.setVis(idx, VIS.CURRENT);
     } else {
       this.r.setVis(idx, VIS.CLOSED);

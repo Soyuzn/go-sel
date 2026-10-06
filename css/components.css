@@ -1270,5 +1270,9 @@ input[type="number"]:focus { border-color: var(--accent); outline: none; box-sha
 
 .receipt__foot { display: flex; gap: 8px; }
 .receipt__foot .btn { flex: 1 1 auto; padding: 0 10px; }
-.receipt__close { --btn-bg: rgba(255, 255, 255, 0.92); --btn-fg: var(--gs-ink-900); }
+/* Tombol di atas backdrop gelap: harus kontras dengan latar gelap, bukan permukaan kartu */
+.receipt__close { --btn-bg: transparent; --btn-fg: #fff; --btn-border: rgba(255, 255, 255, 0.6); }
+.receipt__close:hover:not(:disabled) { color: #fff; border-color: #fff; background: rgba(255, 255, 255, 0.12); }
+#rc-other { --btn-bg: #fff; --btn-fg: var(--gs-ink-900); --btn-border: #fff; }
+#rc-other:hover:not(:disabled) { color: var(--gs-green-800); border-color: #fff; }
 .receipt::backdrop { background: rgba(10, 20, 14, 0.6); }

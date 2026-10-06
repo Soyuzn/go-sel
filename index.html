@@ -39,6 +39,7 @@
   <script defer src="js/stats.js"></script>
   <script defer src="js/game.js"></script>
   <script defer src="js/input.js"></script>
+  <script defer src="js/audio.js"></script>
   <script defer src="js/motion.js"></script>
   <script defer src="js/ui.js"></script>
   <script defer src="js/main.js"></script>
@@ -115,6 +116,9 @@
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
     <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2.5L4.5 14H11l-1 7.5L19.5 10H13z"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></symbol>
     <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M7.5 14h9"/></symbol>
   </svg>
 
@@ -146,6 +150,9 @@
         </button>
         <button class="btn btn--ghost btn--sm" id="btn-about" type="button">
           <svg class="ico" aria-hidden="true"><use href="#i-info"/></svg><span class="hide-sm">Tentang</span>
+        </button>
+        <button class="icon-btn" id="btn-sound" type="button" aria-pressed="true" aria-label="Suara aktif, klik untuk membisukan" title="Suara">
+          <svg class="ico" aria-hidden="true"><use href="#i-volume"/></svg>
         </button>
         <button class="icon-btn" id="btn-theme" type="button" aria-label="Ganti tema terang/gelap" title="Ganti tema">
           <svg class="ico ico--sun" aria-hidden="true"><use href="#i-sun"/></svg>
@@ -225,6 +232,10 @@
               <svg class="ico" aria-hidden="true"><use href="#i-finish"/></svg><span>Selesaikan</span>
             </button>
           </div>
+          <label class="music-toggle" title="Musik latar saat algoritma berpikir">
+            <input type="checkbox" id="music-toggle" checked>
+            <svg class="ico" aria-hidden="true"><use href="#i-music"/></svg><span>Musik</span>
+          </label>
           <label class="speed" for="speed">
             <span class="speed__label">Kecepatan</span>
             <input type="range" id="speed" min="1" max="100" value="55" aria-describedby="speed-out">
@@ -759,6 +770,62 @@
       <footer class="dialog__foot">
         <button class="btn btn--ghost" type="button" id="quiz-next">Soal lain</button>
         <button class="btn btn--primary" type="button" id="quiz-submit">Jawab</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-receipt" class="dialog receipt" aria-labelledby="receipt-title">
+    <form method="dialog" class="receipt__inner">
+      <div class="receipt__paper-wrap">
+        <article class="struk" id="struk">
+          <header class="struk__head">
+            <svg class="struk__logo" aria-hidden="true"><use href="#i-logo"/></svg>
+            <div>
+              <p class="struk__brand">GO-SEL</p>
+              <p class="struk__tag">Lab Berpikir Komputasional · ITB</p>
+            </div>
+          </header>
+          <p class="struk__meta"><span id="rc-order">GS-000000-0000</span><span id="rc-date">-</span></p>
+
+          <div class="struk__hero">
+            <h2 class="struk__title" id="receipt-title">PAKET TERKIRIM</h2>
+            <p class="struk__stars" id="receipt-stars" role="img" aria-label="0 dari 5 bintang">☆☆☆☆☆</p>
+            <p class="struk__note"><span id="receipt-sub">Kurir A*</span> · <span id="receipt-note"></span></p>
+          </div>
+
+          <dl class="struk__rows">
+            <div><dt>Waktu komputasi</dt><dd><output id="rc-time">-</output></dd></div>
+            <div><dt>Sel dijelajahi</dt><dd><output id="rc-visited">-</output></dd></div>
+            <div><dt>Panjang jalur</dt><dd><output id="rc-length">-</output></dd></div>
+            <div><dt>Biaya <small id="rc-optimal"></small></dt><dd><output id="rc-cost">-</output></dd></div>
+          </dl>
+
+          <div id="rc-fare-block">
+            <dl class="struk__rows">
+              <div><dt>Tarif dasar</dt><dd>Rp4.000</dd></div>
+              <div><dt><span>Jarak <span id="rc-fare-cost">0</span> × Rp1rb</span></dt><dd><output id="rc-fare-dist">Rp0</output></dd></div>
+            </dl>
+            <p class="struk__total"><span>TOTAL ONGKIR</span><output id="rc-fare">Rp0</output></p>
+          </div>
+
+          <p class="struk__total struk__total--pts"><span>SELPOIN</span><output id="rc-earned">+0</output></p>
+          <p class="struk__earn" id="rc-earn"></p>
+
+          <p class="struk__insight" id="rc-insight"></p>
+
+          <div class="struk__foot">
+            <div class="struk__barcode" id="rc-barcode" aria-hidden="true"></div>
+            <p class="struk__code"><span id="rc-code">GS0000000000</span> · Terima kasih!</p>
+          </div>
+
+          <span class="struk__stamp" id="rc-stamp" aria-hidden="true">TERKIRIM</span>
+        </article>
+      </div>
+
+      <footer class="receipt__foot">
+        <button class="btn btn--ghost receipt__close" value="close">Tutup</button>
+        <button class="btn btn--outline" type="button" id="rc-other">Algoritma lain</button>
+        <button class="btn btn--primary" type="button" id="rc-compare">Bandingkan semua</button>
       </footer>
     </form>
   </dialog>

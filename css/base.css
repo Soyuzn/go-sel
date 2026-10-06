@@ -55,8 +55,8 @@ a:hover { color: var(--accent-hover); }
 
 ::selection { background: var(--gs-green-200); color: var(--gs-ink-900); }
 
-/* Atribut hidden harus menang atas display komponen (kecuali empty state yang memudar). */
-[hidden]:not(.map__empty) { display: none !important; }
+/* Atribut hidden harus menang atas display komponen. */
+[hidden] { display: none !important; }
 
 .sr-only {
   position: absolute !important;

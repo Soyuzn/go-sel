@@ -83,10 +83,62 @@
       [12, 16, 19, 24, 28].forEach(function (s, i) { tone(hz(s + 12), { type: 'sine', dur: 0.18, vol: 0.18, delay: i * 0.05 }); });
     },
     click: function () { tone(660, { type: 'sine', dur: 0.05, vol: 0.12 }); },
+    // Klakson motor "tin-tin" saat kurir sampai.
+    honk: function () {
+      tone(523, { type: 'square', dur: 0.11, vol: 0.09 });
+      tone(440, { type: 'square', dur: 0.16, vol: 0.09, delay: 0.15 });
+    },
     // Bunyi printer struk: deretan klik cepat lalu "sobek".
     print: function () {
       for (var i = 0; i < 14; i++) tone(1400 + (i % 3) * 120, { type: 'square', dur: 0.02, vol: 0.04, delay: i * 0.055 });
       tone(300, { type: 'sawtooth', dur: 0.12, vol: 0.06, delay: 0.85, slide: 120 });
+    }
+  };
+
+  /* ---------- Mesin motor kurir ----------
+   * Dua osilator rendah (gergaji + kotak) lewat low-pass, lalu volumenya
+   * dimodulasi LFO supaya terdengar "brrrm" seperti mesin motor kecil. */
+  var eng = null;
+
+  var engine = {
+    start: function () {
+      if (eng || !settings.sound || !init()) return;
+      var t = ctx.currentTime;
+      var out = ctx.createGain(), filter = ctx.createBiquadFilter();
+      var o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+      var lfo = ctx.createOscillator(), lfoGain = ctx.createGain(), am = ctx.createGain();
+      o1.type = 'sawtooth'; o1.frequency.value = 55;
+      o2.type = 'square'; o2.frequency.value = 82; o2.detune.value = 8;
+      filter.type = 'lowpass'; filter.frequency.value = 520; filter.Q.value = 3;
+      lfo.frequency.value = 22;                 // denyut piston
+      lfoGain.gain.value = 0.45;
+      am.gain.value = 0.55;
+      lfo.connect(lfoGain); lfoGain.connect(am.gain);
+      o1.connect(filter); o2.connect(filter); filter.connect(am); am.connect(out);
+      out.gain.setValueAtTime(0.0001, t);
+      out.gain.exponentialRampToValueAtTime(0.16, t + 0.18);
+      out.connect(sfxBus);
+      [o1, o2, lfo].forEach(function (o) { o.start(t); });
+      eng = { out: out, o1: o1, o2: o2, lfo: lfo, filter: filter };
+    },
+    // v = 0 (pelan) .. 1 (ngebut): nada, denyut, dan filter ikut naik.
+    setSpeed: function (v) {
+      if (!eng) return;
+      var t = ctx.currentTime;
+      v = Math.max(0, Math.min(1, v));
+      eng.o1.frequency.setTargetAtTime(55 + v * 45, t, 0.06);
+      eng.o2.frequency.setTargetAtTime(82 + v * 70, t, 0.06);
+      eng.lfo.frequency.setTargetAtTime(22 + v * 18, t, 0.06);
+      eng.filter.frequency.setTargetAtTime(520 + v * 900, t, 0.06);
+    },
+    stop: function () {
+      if (!eng) return;
+      var e = eng, t = ctx.currentTime;
+      eng = null;
+      e.out.gain.cancelScheduledValues(t);
+      e.out.gain.setValueAtTime(e.out.gain.value, t);
+      e.out.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+      [e.o1, e.o2, e.lfo].forEach(function (o) { o.stop(t + 0.3); });
     }
   };
 
@@ -140,7 +192,7 @@
   function setSound(on) {
     settings.sound = on;
     ns.store.set('audio', settings);
-    if (!on) music.stop();
+    if (!on) { music.stop(); engine.stop(); }
     if (ctx) master.gain.setTargetAtTime(on ? 0.8 : 0, ctx.currentTime, 0.05);
   }
 
@@ -154,8 +206,10 @@
     settings: settings,
     sfx: sfx,
     music: music,
+    engine: engine,
     setSound: setSound,
     setMusic: setMusic,
-    isPlaying: function () { return playing; }
+    isPlaying: function () { return playing; },
+    isDriving: function () { return !!eng; }
   };
 })(window.GoSel = window.GoSel || {});

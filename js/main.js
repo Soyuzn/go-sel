@@ -84,7 +84,6 @@
       })(performance.now());
 
       this.bindShortcuts();
-      this.watchTheme();
       ns.motion.reveal();
       ns.motion.ripple();
       document.getElementById('kontrol').scrollTop = 0;
@@ -534,8 +533,7 @@
     /* ---------- Tema ---------- */
     toggleTheme: function () {
       var self = this, root = document.documentElement;
-      var dark = root.dataset.theme ? root.dataset.theme === 'dark'
-        : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var dark = root.dataset.theme === 'dark';
       ns.motion.themeSwitch(document.getElementById('btn-theme'), function () {
         root.dataset.theme = dark ? 'light' : 'dark';
         try { localStorage.setItem('go-sel:theme', root.dataset.theme); } catch (e) { /* abaikan */ }
@@ -550,11 +548,6 @@
       this.ui.drawThumbs();
     },
 
-    watchTheme: function () {
-      var self = this, mq = window.matchMedia('(prefers-color-scheme: dark)');
-      var fn = function () { if (!document.documentElement.dataset.theme) self.onThemeChange(); };
-      if (mq.addEventListener) mq.addEventListener('change', fn); else if (mq.addListener) mq.addListener(fn);
-    },
 
     /* ---------- Pintasan keyboard ---------- */
     bindShortcuts: function () {

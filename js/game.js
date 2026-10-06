@@ -179,8 +179,15 @@
 
   P.renderWallet = function (bump) {
     var e = this.els, lv = this.level();
-    e.points.textContent = this.points.toLocaleString('id-ID');
-    if (e.pointsMini) e.pointsMini.textContent = e.points.textContent;
+    var fmt = function (n) { return Math.round(n).toLocaleString('id-ID'); };
+    if (bump) {
+      ns.motion.countUp(e.points, this.points, fmt, 900);
+      if (e.pointsMini) ns.motion.countUp(e.pointsMini, this.points, fmt, 900);
+    } else {
+      e.points.dataset.num = this.points;
+      e.points.textContent = fmt(this.points);
+      if (e.pointsMini) { e.pointsMini.dataset.num = this.points; e.pointsMini.textContent = fmt(this.points); }
+    }
     if (bump) {
       e.points.classList.remove('bump');
       void e.points.offsetWidth;

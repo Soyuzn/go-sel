@@ -85,6 +85,8 @@
 
       this.bindShortcuts();
       this.watchTheme();
+      ns.motion.reveal();
+      ns.motion.ripple();
       document.getElementById('kontrol').scrollTop = 0;
       this.openFromLink();
 
@@ -528,12 +530,14 @@
 
     /* ---------- Tema ---------- */
     toggleTheme: function () {
-      var root = document.documentElement;
+      var self = this, root = document.documentElement;
       var dark = root.dataset.theme ? root.dataset.theme === 'dark'
         : window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.dataset.theme = dark ? 'light' : 'dark';
-      try { localStorage.setItem('go-sel:theme', root.dataset.theme); } catch (e) { /* abaikan */ }
-      this.onThemeChange();
+      ns.motion.themeSwitch(document.getElementById('btn-theme'), function () {
+        root.dataset.theme = dark ? 'light' : 'dark';
+        try { localStorage.setItem('go-sel:theme', root.dataset.theme); } catch (e) { /* abaikan */ }
+        self.onThemeChange();
+      });
     },
 
     onThemeChange: function () {

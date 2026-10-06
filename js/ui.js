@@ -300,10 +300,11 @@
 
   P.resetResult = function () {
     var el = this.el;
-    ['time', 'visited', 'length', 'cost', 'steps', 'frontier'].forEach(function (k) { el[k].value = '–'; });
+    ['time', 'visited', 'length', 'cost', 'steps', 'frontier'].forEach(function (k) { el[k].value = '–'; el[k].dataset.num = 0; });
     el.fare.value = 'Rp0';
     el.rating.hidden = true;
     el.insight.hidden = true;
+    document.getElementById('hasil').classList.remove('has-result');
     el.dsItems.textContent = '';
     this.setTracker(null);
     this.setResultChip('Belum jalan', 'idle');
@@ -356,10 +357,19 @@
 
   P.showResult = function (m) {
     var el = this.el;
+    var up = ns.motion.countUp, sec = document.getElementById('hasil');
+    sec.classList.remove('has-result');
+    void sec.offsetWidth;            // restart animasi kartu statistik
+    sec.classList.add('has-result');
     el.time.value = fmtNum(m.time, 3);
-    el.visited.value = fmtNum(m.visited);
-    el.length.value = m.found ? fmtNum(m.length) : 'tidak ada';
-    el.cost.value = ns.Stats.fmtCost(m.cost);
+    up(el.visited, m.visited, function (n) { return fmtNum(Math.round(n)); });
+    if (m.found) {
+      up(el.length, m.length, function (n) { return fmtNum(Math.round(n)); });
+      up(el.cost, m.cost, function (n) { return ns.Stats.fmtCost(n === m.cost ? n : Math.round(n)); });
+    } else {
+      el.length.value = 'tidak ada';
+      el.cost.value = ns.Stats.fmtCost(m.cost);
+    }
     [el.visited, el.length, el.cost].forEach(this.flash);
     if (m.found) {
       // Ongkir main-main: Rp4.000 + Rp1.000 per satuan biaya, dibulatkan ke Rp500.

@@ -29,6 +29,11 @@
     });
   }
 
+  // Tampilkan semua bagian sekaligus (dipakai saat lompat langsung lewat link).
+  function revealAll() {
+    document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('is-in'); });
+  }
+
   // Angka naik dari nilai lama ke nilai baru. format(n) mengubah angka jadi teks.
   function countUp(el, to, format, duration) {
     if (reduced || !isFinite(to)) { el.textContent = format(to); return; }
@@ -77,5 +82,5 @@
     });
   }
 
-  ns.motion = { reduced: reduced, reveal: reveal, countUp: countUp, ripple: ripple, themeSwitch: themeSwitch };
+  ns.motion = { reduced: reduced, reveal: reveal, revealAll: revealAll, countUp: countUp, ripple: ripple, themeSwitch: themeSwitch };
 })(window.GoSel = window.GoSel || {});

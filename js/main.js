@@ -119,7 +119,10 @@
       }
       if (q.has('banding')) this.compareAll();
       var target = document.getElementById(q.get('lihat') || '');
-      if (target) setTimeout(function () { target.scrollIntoView({ behavior: 'instant' }); }, 50);
+      if (target) {
+        ns.motion.revealAll();
+        setTimeout(function () { target.scrollIntoView({ behavior: 'instant' }); }, 50);
+      }
     },
 
     /* ---------- Perubahan peta ---------- */

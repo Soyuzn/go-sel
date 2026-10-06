@@ -178,6 +178,7 @@
 @media print {
   .appbar, .bottomnav, .controls, .playbar, .toasts, .promo, .wallet__actions, .skip-link { display: none !important; }
   body { background: #fff; }
+  .reveal { opacity: 1 !important; transform: none !important; }
   .card { box-shadow: none !important; break-inside: avoid; }
   .lab-layout { grid-template-columns: 1fr; grid-template-areas: "lab" "hasil"; }
 }

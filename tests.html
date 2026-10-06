@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Go-Sel · Uji Algoritma</title>
+  <style>
+    :root { color-scheme: light dark; --ok: #008C15; --bad: #F52713; }
+    body { font: 15px/1.5 system-ui, sans-serif; margin: 0 auto; max-width: 860px; padding: 24px 16px; background: #EEF8EF; color: #14201A; }
+    @media (prefers-color-scheme: dark) { body { background: #0E1512; color: #E8F3EA; } }
+    h1 { margin: 0 0 4px; }
+    #summary { font-weight: 700; padding: 10px 14px; border-radius: 12px; color: #fff; background: var(--ok); }
+    #summary.fail { background: var(--bad); }
+    ol { padding-left: 20px; }
+    li { padding: 4px 0; }
+    li.pass::marker { color: var(--ok); }
+    li.fail { color: var(--bad); font-weight: 600; }
+    code { font-family: ui-monospace, monospace; font-size: .9em; }
+    a { color: inherit; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Uji logika algoritma Go-Sel</h1>
+    <p>Assertion otomatis untuk kelima algoritma. <a href="index.html">Kembali ke lab</a></p>
+    <p id="summary" role="status">Menjalankan…</p>
+    <ol id="list"></ol>
+  </main>
+
+  <script src="js/algorithms/common.js"></script>
+  <script src="js/algorithms/bfs.js"></script>
+  <script src="js/algorithms/dfs.js"></script>
+  <script src="js/algorithms/dijkstra.js"></script>
+  <script src="js/algorithms/astar.js"></script>
+  <script src="js/algorithms/greedy.js"></script>
+  <script src="js/grid.js"></script>
+  <script src="js/maze.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var NS = window.GoSel, ALG = NS.algorithms, ORDER = NS.ALGO_ORDER, A = NS.algo;
+    var list = document.getElementById('list'), pass = 0, fail = 0;
+
+    function check(name, cond, detail) {
+      var li = document.createElement('li');
+      li.className = cond ? 'pass' : 'fail';
+      li.textContent = (cond ? '✔ ' : '✘ ') + name + (detail ? '  —  ' + detail : '');
+      list.appendChild(li);
+      cond ? pass++ : fail++;
+    }
+
+    // Membuat grid dari gambar ASCII: '#' gedung, '~' macet, 'S' kurir, 'G' tujuan.
+    function fromAscii(lines) {
+      var rows = lines.length, cols = lines[0].length;
+      var g = new NS.Grid(rows, cols);
+      lines.forEach(function (line, r) {
+        for (var c = 0; c < cols; c++) {
+          var ch = line[c];
+          if (ch === '#') g.cells[r * cols + c] = 1;
+          else if (ch === '~') g.cells[r * cols + c] = 2;
+          else if (ch === 'S') g.start = { r: r, c: c };
+          else if (ch === 'G') g.goal = { r: r, c: c };
+        }
+      });
+      return g;
+    }
+
+    function run(id, g, diagonal, record) {
+      return ALG[id].solve(g.cells, g.rows, g.cols, g.startIndex(), g.goalIndex(),
+        { diagonal: !!diagonal, record: !!record });
+    }
+
+    function validPath(g, res, diagonal) {
+      if (!res.found) return true;
+      var p = res.path;
+      if (p[0] !== g.startIndex() || p[p.length - 1] !== g.goalIndex()) return false;
+      for (var i = 1; i < p.length; i++) {
+        var a = g.rc(p[i - 1]), b = g.rc(p[i]);
+        var dr = Math.abs(a.r - b.r), dc = Math.abs(a.c - b.c);
+        if (g.cells[p[i]] === 1) return false;
+        if (dr + dc === 0 || dr > 1 || dc > 1) return false;
+        if (!diagonal && dr + dc !== 1) return false;
+        if (dr === 1 && dc === 1 && (g.get(a.r, b.c) === 1 || g.get(b.r, a.c) === 1)) return false;
+      }
+      return true;
+    }
+
+    // 1. Peta kosong 20 x 30
+    var empty = new NS.Grid(20, 30);
+    empty.start = { r: 2, c: 3 }; empty.goal = { r: 17, c: 26 };
+    var dj = run('dijkstra', empty);
+    check('Peta kosong: BFS = Dijkstra (4 arah)', A.sameCost(run('bfs', empty).cost, dj.cost), 'biaya ' + dj.cost);
+    check('Peta kosong: A* = Dijkstra (4 arah)', A.sameCost(run('astar', empty).cost, dj.cost));
+    check('Peta kosong: biaya = jarak Manhattan (38)', A.sameCost(dj.cost, 38));
+    check('Peta kosong: A* mengunjungi lebih sedikit sel dari Dijkstra',
+      run('astar', empty).visitedCount < dj.visitedCount);
+    ORDER.forEach(function (id) {
+      var r = run(id, empty);
+      check('Peta kosong: ' + ALG[id].name + ' menemukan jalur yang valid', r.found && validPath(empty, r, false));
+    });
+
+    // 2. Diagonal pada peta kosong
+    var djD = run('dijkstra', empty, true);
+    var octile = A.heuristic(empty.startIndex(), empty.goalIndex(), empty.cols, true);
+    check('Diagonal: biaya Dijkstra = jarak Octile', A.sameCost(djD.cost, octile), djD.cost.toFixed(4));
+    check('Diagonal: A* = Dijkstra', A.sameCost(run('astar', empty, true).cost, djD.cost));
+
+    // 3. Tujuan terkurung
+    var boxed = fromAscii([
+      'S.........',
+      '..........',
+      '.....###..',
+      '.....#G#..',
+      '.....###..',
+      '..........'
+    ]);
+    ORDER.forEach(function (id) {
+      var r = run(id, boxed, false, true);
+      check('Tujuan terkurung: ' + ALG[id].name + ' found = false', r.found === false && r.path === null && r.cost === Infinity);
+    });
+    check('Tujuan terkurung (diagonal): semua found = false', ORDER.every(function (id) { return !run(id, boxed, true).found; }));
+
+    // 4. Kurir terkurung
+    var trapped = fromAscii(['.###......', '.#S#......', '.###....G.', '..........', '..........']);
+    check('Kurir terkurung: semua found = false', ORDER.every(function (id) { return !run(id, trapped).found; }));
+    check('Kurir terkurung: hanya 1 sel dikunjungi', ORDER.every(function (id) { return run(id, trapped).visitedCount === 1; }));
+
+    // 5. Bersebelahan
+    var adj = fromAscii(['.....', '.SG..', '.....', '.....', '.....']);
+    ORDER.forEach(function (id) {
+      var r = run(id, adj);
+      if (id === 'dfs') {
+        // DFS menyusur "atas" dulu, jadi jalurnya boleh memutar, asal valid.
+        check('Bersebelahan: DFS menemukan jalur valid (boleh memutar)', r.found && validPath(adj, r, false),
+          'panjang ' + (r.path.length - 1));
+      } else {
+        check('Bersebelahan: ' + ALG[id].name + ' jalur 2 sel, biaya 1', r.found && r.path.length === 2 && A.sameCost(r.cost, 1));
+      }
+    });
+
+    // 6. Tanpa corner cutting
+    var corner = fromAscii([
+      '.....',
+      '.S#..',
+      '.#G..',
+      '.....',
+      '.....'
+    ]);
+    ORDER.forEach(function (id) {
+      var r = run(id, corner, true);
+      var direct = r.found && r.path.length === 2;
+      check('Diagonal tanpa corner cutting: ' + ALG[id].name, r.found && !direct && validPath(corner, r, true),
+        r.found ? 'panjang ' + (r.path.length - 1) : 'tidak ada jalur');
+    });
+
+    // 7. Sel macet: BFS mengabaikan biaya, Dijkstra/A* menghindar
+    var jam = fromAscii([
+      '.......',
+      'S~~~~~G',
+      '.......'
+    ]);
+    var djJam = run('dijkstra', jam), bfsJam = run('bfs', jam);
+    check('Macet: Dijkstra memutar (biaya 8)', A.sameCost(djJam.cost, 8), 'biaya ' + djJam.cost);
+    check('Macet: A* = Dijkstra', A.sameCost(run('astar', jam).cost, djJam.cost));
+    check('Macet: BFS lewat jalan macet (tidak optimal)', bfsJam.cost > djJam.cost, 'biaya ' + bfsJam.cost);
+
+    // 8. Event log
+    var rec = run('astar', empty, false, true);
+    var types = { 1: 0, 2: 0, 3: 0 };
+    for (var i = 0; i < rec.events.length; i += 2) types[rec.events[i]]++;
+    check('Event: jumlah event tipe 2 = sel dikunjungi', types[2] === rec.visitedCount);
+    check('Event: mode timing tidak merekam', run('astar', empty).events === null);
+
+    // 9. Maze acak tetap tersambung
+    var mz = new NS.Grid(31, 51);
+    var m = NS.Maze.backtracker(31, 51, Math.random, 0);
+    mz.cells.set(m.cells);
+    mz.start = mz.nearestFree(0, 0, null);
+    mz.goal = mz.nearestFree(30, 50, mz.start);
+    var mres = ORDER.map(function (id) { return run(id, mz); });
+    check('Maze acak: semua algoritma menemukan jalur', mres.every(function (r) { return r.found; }));
+    check('Maze sempurna: semua jalur punya biaya sama (jalur unik)',
+      mres.every(function (r) { return A.sameCost(r.cost, mres[2].cost); }));
+
+    // 10. Uji acak: A* = Dijkstra, BFS = Dijkstra (4 arah tanpa macet)
+    var okA = true, okB = true, okV = true;
+    for (var t = 0; t < 150; t++) {
+      var g = new NS.Grid(12 + (t % 9), 15 + (t % 13));
+      var diag = t % 2 === 0, withJam = t % 3 === 0;
+      for (var k = 0; k < g.cells.length; k++) {
+        var x = Math.random();
+        g.cells[k] = x < 0.28 ? 1 : (withJam && x < 0.38 ? 2 : 0);
+      }
+      g.start = g.nearestFree(0, 0, null);
+      g.goal = g.nearestFree(g.rows - 1, g.cols - 1, g.start);
+      var d = run('dijkstra', g, diag);
+      var a = run('astar', g, diag);
+      if (!A.sameCost(a.cost, d.cost)) okA = false;
+      if (!diag && !withJam && !A.sameCost(run('bfs', g, false).cost, d.cost)) okB = false;
+      ORDER.forEach(function (id) {
+        var r = run(id, g, diag);
+        if (r.found !== d.found || !validPath(g, r, diag) || r.cost < d.cost - 1e-9) okV = false;
+      });
+    }
+    check('150 peta acak: biaya A* selalu = Dijkstra', okA);
+    check('150 peta acak: biaya BFS = Dijkstra (4 arah, tanpa macet)', okB);
+    check('150 peta acak: semua jalur valid dan tidak lebih murah dari Dijkstra', okV);
+
+    // 11. PriorityQueue
+    var pq = new A.PriorityQueue(2), vals = [5, 1, 4, 1, 3, 9, 2, 6];
+    vals.forEach(function (v, i) { pq.push(i, v, 0); });
+    var out = [];
+    while (pq.size) out.push(vals[pq.pop()]);
+    check('PriorityQueue: keluar terurut & stabil', out.join(',') === '1,1,2,3,4,5,6,9', out.join(','));
+
+    // 12. Grid resize & JSON
+    var rg = new NS.Grid(20, 30);
+    rg.start = { r: 19, c: 29 }; rg.goal = { r: 5, c: 5 }; rg.set(3, 3, 1);
+    rg.resize(10, 10);
+    check('Resize: bidak dipindah ke dalam batas', rg.inBounds(rg.start.r, rg.start.c) && rg.get(3, 3) === 1);
+    var back = NS.Grid.fromJSON(JSON.parse(JSON.stringify(rg.toJSON())));
+    check('JSON: simpan lalu muat menghasilkan peta sama', back.cells.join('') === rg.cells.join('') && back.start.r === rg.start.r);
+
+    var sum = document.getElementById('summary');
+    sum.textContent = pass + ' lulus, ' + fail + ' gagal';
+    if (fail) sum.classList.add('fail');
+    document.title = (fail ? '✘ ' : '✔ ') + document.title;
+  })();
+  </script>
+</body>
+</html>

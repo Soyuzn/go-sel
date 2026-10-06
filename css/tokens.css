@@ -1,5 +1,5 @@
 /* Go-Sel — design tokens. Tema terang default, tema gelap lewat
- * prefers-color-scheme atau tombol manual (data-theme pada <html>). */
+ * tombol manual (data-theme="dark" pada <html>). */
 :root {
   color-scheme: light;
 
@@ -96,70 +96,36 @@
   --hover-bad: rgba(245, 39, 19, 0.3);
 }
 
-/* Token gelap ditulis dua kali: mengikuti sistem (kecuali dipaksa terang)
- * dan saat dipaksa gelap lewat tombol. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #0E1512;
-    --surface: #16201B;
-    --surface-2: #1B2721;
-    --surface-3: #22312A;
-    --text: #E8F3EA;
-    --text-muted: #A7BBAE;
-    --text-soft: #87A091;
-    --border: #2A3B32;
-    --border-strong: #3E5649;
-    --accent-text: var(--gs-green-400);
-    --accent-soft: #1D3A22;
-    --focus: #FFB400;
-    --danger-text: #FF8A7D;
-    --danger-soft: #3A1A16;
-    --warn-soft: #3A2E10;
-    --warn-text: #FFD36B;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
-    --wallet-bg: #0B5E17;
-
-    --cell-empty: #1F2B25;
-    --cell-line: rgba(232, 243, 234, 0.06);
-    --cell-visited: #3F6B35;
-    --cell-path: var(--gs-green-600);
-    --cell-wall: #070B09;
-    --cell-jam-bg: #4A211C;
-    --cell-text: #E8F3EA;
-    --road-mark: #EEF8EF;
-  }
-}
-
+/* Tema gelap hanya aktif lewat tombol (default selalu terang). */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0E1512;
-  --surface: #16201B;
-  --surface-2: #1B2721;
-  --surface-3: #22312A;
-  --text: #E8F3EA;
-  --text-muted: #A7BBAE;
-  --text-soft: #87A091;
-  --border: #2A3B32;
-  --border-strong: #3E5649;
+  --bg: #050706;
+  --surface: #0C100E;
+  --surface-2: #111613;
+  --surface-3: #181F1B;
+  --text: #EDF5EF;
+  --text-muted: #A3B3A8;
+  --text-soft: #7D8F84;
+  --border: #1C2420;
+  --border-strong: #2C3832;
   --accent-text: var(--gs-green-400);
-  --accent-soft: #1D3A22;
+  --accent-soft: #10261A;
   --focus: #FFB400;
   --danger-text: #FF8A7D;
-  --danger-soft: #3A1A16;
-  --warn-soft: #3A2E10;
+  --danger-soft: #2A100D;
+  --warn-soft: #261E08;
   --warn-text: #FFD36B;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
-  --wallet-bg: #0B5E17;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, 0.9);
+  --wallet-bg: #064A10;
 
-  --cell-empty: #1F2B25;
-  --cell-line: rgba(232, 243, 234, 0.06);
-  --cell-visited: #3F6B35;
+  --cell-empty: #0E1310;
+  --cell-line: rgba(237, 245, 239, 0.05);
+  --cell-visited: #2C4F25;
   --cell-path: var(--gs-green-600);
-  --cell-wall: #070B09;
-  --cell-jam-bg: #4A211C;
-  --cell-text: #E8F3EA;
+  --cell-wall: #2F3A34;
+  --cell-window: rgba(255, 196, 64, 0.9);
+  --cell-jam-bg: #2E120E;
+  --cell-text: #EDF5EF;
   --road-mark: #EEF8EF;
 }

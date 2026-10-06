@@ -1050,3 +1050,49 @@ input[type="number"]:focus { border-color: var(--accent); outline: none; box-sha
 }
 .points-pill .ico { width: 20px; height: 20px; }
 .points-pill:hover { background: var(--surface-3); }
+
+/* ---------- Animasi ---------- */
+/* Masuk halaman: kartu utama naik bertahap */
+.lab, .controls, .results { animation: rise-in 0.6s cubic-bezier(.2, .8, .2, 1) both; }
+.controls { animation-delay: 0.08s; }
+.results { animation-delay: 0.16s; }
+@keyframes rise-in { from { opacity: 0; transform: translateY(18px); } }
+
+/* Muncul saat di-scroll (kelas dipasang oleh motion.js) */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.6s ease, transform 0.6s cubic-bezier(.2, .8, .2, 1); }
+.reveal.is-in { opacity: 1; transform: none; }
+
+/* Riak tombol */
+.btn, .wallet__action, .service, .bottomnav a { position: relative; overflow: hidden; }
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.18;
+  transform: scale(0);
+  pointer-events: none;
+  animation: ripple 0.6s ease-out forwards;
+}
+@keyframes ripple { to { transform: scale(1); opacity: 0; } }
+
+/* Ikon layanan memantul saat dipilih */
+.service input:checked + .service__icon { animation: pop 0.45s cubic-bezier(.3, 1.8, .5, 1); }
+@keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1.06); } }
+
+/* Ikon menu bawah melompat saat aktif */
+.bottomnav a[aria-current="true"] .ico { animation: hop 0.4s ease; }
+@keyframes hop { 40% { transform: translateY(-4px); } }
+
+/* Kartu statistik hasil muncul berurutan */
+.results.has-result .stat { animation: rise-in 0.45s cubic-bezier(.2, .8, .2, 1) both; }
+.results.has-result .stat:nth-child(2) { animation-delay: 0.05s; }
+.results.has-result .stat:nth-child(3) { animation-delay: 0.1s; }
+.results.has-result .stat:nth-child(4) { animation-delay: 0.15s; }
+.results.has-result .stat:nth-child(5) { animation-delay: 0.2s; }
+.results.has-result .stat:nth-child(6) { animation-delay: 0.25s; }
+
+/* Garis tracker terisi bertahap */
+.tracker li::before { transition: background-color 0.4s ease; }
+
+/* Transisi tema (View Transitions API): lingkaran membesar dari tombol */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }

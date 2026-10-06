@@ -30,7 +30,14 @@
       diagonal: $('#diagonal'),
       heuristic: $('#heuristic-out'),
       piecesMeta: $('#pieces-meta'),
-      empty: $('#empty-state'),
+      coach: $('#coach'),
+      coachPiece: $('#coach .coach__piece'),
+      coachStep: $('#coach-step'),
+      coachTitle: $('#coach-title'),
+      coachDesc: $('#coach-desc'),
+      hint: $('#hint'),
+      playbar: $('.playbar'),
+      results: $('#hasil'),
       rowsRange: $('#rows-range'), rowsNum: $('#rows-num'),
       colsRange: $('#cols-range'), colsNum: $('#cols-num'),
       cellTotal: $('#cell-total'), sizeMeta: $('#size-meta'),
@@ -210,21 +217,45 @@
     el.step.disabled = !ready || st === S.DONE || app.busy;
     el.finish.disabled = !ready || st === S.DONE || app.busy;
 
-    if (!ready) {
-      var missing = [];
-      if (!app.grid.start) missing.push('kurir');
-      if (!app.grid.goal) missing.push('alamat tujuan');
-      el.runHint.textContent = 'Tempatkan ' + missing.join(' dan ') + ' dulu untuk menjalankan.';
+    this.syncCoach(app, st);
+  };
+
+  /* Panduan 3 langkah untuk pengguna baru: kurir -> tujuan -> Jalankan.
+   * Selama bidak belum lengkap, kontrol lain disembunyikan supaya fokus. */
+  P.syncCoach = function (app, st) {
+    var el = this.el, g = app.grid, S = ns.STATES;
+    var need = !g.start ? 'start' : (!g.goal ? 'goal' : null);
+    var firstRun = !app.hasRun && !app.game.history.length;
+
+    el.coach.hidden = !need;
+    el.playbar.hidden = !!need;
+    el.results.classList.toggle('is-empty', st === S.IDLE || st === S.READY);
+    el.run.classList.toggle('is-nudge', !need && st === S.READY && firstRun);
+
+    if (need) {
+      var isStart = need === 'start';
+      el.coachStep.textContent = 'Langkah ' + (isStart ? 1 : 2) + ' dari 3';
+      el.coachTitle.textContent = isStart ? 'Seret kurir ke peta' : 'Sekarang seret alamat tujuan';
+      el.coachDesc.textContent = isStart
+        ? 'Tarik ikon kurir ke sel mana saja di peta. Di HP: ketuk ikonnya, lalu ketuk peta.'
+        : 'Taruh pin tujuan agak jauh dari kurir supaya pencariannya seru.';
+      el.coachPiece.dataset.piece = need;
+      el.coachPiece.querySelector('use').setAttribute('href', isStart ? '#i-courier' : '#i-pin');
+      el.coachPiece.setAttribute('aria-label', 'Seret ' + (isStart ? 'kurir' : 'alamat tujuan') + ' ke peta');
+      el.hint.textContent = 'Ikuti langkah di bawah untuk memulai.';
     } else {
-      el.runHint.textContent = '';
+      el.hint.textContent = 'Tekan dan geser di peta untuk menambah gedung. Bidak di peta bisa digeser.';
     }
-    el.empty.hidden = !!(app.grid.start || app.grid.goal);
+    $$('.pieces .piece').forEach(function (p) { p.classList.toggle('is-next', p.dataset.piece === need); });
+
+    el.runHint.textContent = (!need && st === S.READY && firstRun)
+      ? 'Langkah 3 dari 3: tekan Jalankan dan lihat bagaimana algoritma mencari jalan.' : '';
   };
 
   P.syncPieces = function (grid) {
     var count = 0;
     ['start', 'goal'].forEach(function (k) {
-      var p = grid[k], small = $('[data-pos="' + k + '"]'), card = $('.piece[data-piece="' + k + '"]');
+      var p = grid[k], small = $('[data-pos="' + k + '"]'), card = $('.pieces .piece[data-piece="' + k + '"]');
       if (p) count++;
       small.textContent = p ? 'Baris ' + (p.r + 1) + ', kolom ' + (p.c + 1) : 'Belum di peta';
       card.classList.toggle('is-placed', !!p);
